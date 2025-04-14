@@ -1505,9 +1505,12 @@ a {
 
 .music-player .error-message {
     color: #ff4444;
-    font-size: 0.9rem;
+    background-color: rgba(255, 68, 68, 0.1);
+    padding: 0.5rem;
+    border-radius: 4px;
     margin-top: 0.5rem;
     text-align: center;
+    font-size: 0.9rem;
     animation: fadeIn 0.3s ease;
 }
 
@@ -1524,6 +1527,11 @@ a {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.music-toggle.playing {
+    background-color: var(--accent-color);
+    color: white;
 }
 
 .music-toggle:hover {
@@ -1802,10 +1810,12 @@ footer::after {
 @keyframes fadeIn {
     from {
         opacity: 0;
+        transform: translateY(-10px);
     }
 
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 

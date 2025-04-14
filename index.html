@@ -389,9 +389,10 @@
             <div class="music-controls">
                 <label for="musicSelector">Selecione uma música:</label>
                 <select id="musicSelector" aria-label="Selecione uma música">
-                    <option value="./audio/summer-crush.mp3">Summer Crush</option>
-                    <option value="./audio/theme-principal.mp3">Tema Principal</option>
-                    <option value="./audio/battle-theme.mp3">Tema de Batalha</option>
+                    <option value="">Escolha uma música</option>
+                    <option value="summer-crush">Summer Crush</option>
+                    <option value="theme-principal">Tema Principal</option>
+                    <option value="battle-theme">Tema de Batalha</option>
                 </select>
                 <button id="toggleMusic" class="music-toggle" aria-label="Tocar/Pausar música">▶️</button>
                 <div class="volume-control">
@@ -400,8 +401,7 @@
                         title="Volume">
                 </div>
             </div>
-            <audio id="bgMusic" preload="auto">
-                <source src="" type="audio/mpeg">
+            <audio id="bgMusic" preload="none">
                 Seu navegador não suporta o elemento de áudio.
             </audio>
         </div>

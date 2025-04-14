@@ -12,12 +12,19 @@ const CONFIG = {
 
 // Player de Música
 const musicPlayer = {
+  audioFiles: {
+    "summer-crush": "./audio/summer-crush.mp3",
+    "theme-principal": "./audio/theme-principal.mp3",
+    "battle-theme": "./audio/battle-theme.mp3",
+  },
+
   init() {
     this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
     this.toggleButton = document.getElementById("toggleMusic");
     this.volumeSlider = document.getElementById("volumeSlider");
-    this.isLoading = false;
+    this.isPlaying = false;
+    this.currentTrack = null;
 
     if (
       !this.audio ||
@@ -29,48 +36,93 @@ const musicPlayer = {
       return;
     }
 
-    // Configurar fonte inicial do áudio
-    if (this.selector.value) {
-      this.loadAudio(this.selector.value);
-    }
+    this.setupEventListeners();
+    this.updateVolume(); // Configurar volume inicial
+  },
 
-    // Event Listeners
+  setupEventListeners() {
     this.selector.addEventListener("change", () => this.changeMusic());
     this.toggleButton.addEventListener("click", () => this.togglePlay());
     this.volumeSlider.addEventListener("input", () => this.updateVolume());
-  },
 
-  async loadAudio(audioPath) {
-    this.isLoading = true;
-    try {
-      const response = await fetch(audioPath);
-      if (!response.ok) {
-        throw new Error(`Arquivo não encontrado: ${audioPath}`);
-      }
-      this.audio.src = audioPath;
-      await this.audio.load();
-    } catch (error) {
-      console.error("Erro ao carregar áudio:", error);
-      this.handleError(error);
-    } finally {
-      this.isLoading = false;
-    }
+    this.audio.addEventListener("ended", () => {
+      this.isPlaying = false;
+      this.toggleButton.textContent = "▶️";
+      this.toggleButton.classList.remove("playing");
+    });
+
+    this.audio.addEventListener("error", (e) => this.handleError(e));
   },
 
   async changeMusic() {
-    if (this.isLoading) return;
-
     const selectedValue = this.selector.value;
     if (!selectedValue) return;
 
+    const audioPath = this.audioFiles[selectedValue];
+    if (!audioPath) {
+      console.error("Caminho do áudio não encontrado");
+      return;
+    }
+
     try {
-      await this.loadAudio(selectedValue);
+      // Verificar se o arquivo existe
+      const response = await fetch(audioPath);
+      if (!response.ok) throw new Error("Arquivo de áudio não encontrado");
+
+      // Pausar áudio atual se estiver tocando
+      if (this.isPlaying) {
+        this.audio.pause();
+        this.isPlaying = false;
+      }
+
+      this.audio.src = audioPath;
+      await this.audio.load();
+
       if (this.toggleButton.classList.contains("playing")) {
-        await this.audio.play();
+        this.play();
       }
     } catch (error) {
       this.handleError(error);
     }
+  },
+
+  async togglePlay() {
+    if (!this.audio.src && this.selector.value) {
+      await this.changeMusic();
+    }
+
+    try {
+      if (this.audio.paused) {
+        await this.play();
+      } else {
+        this.pause();
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
+  },
+
+  async play() {
+    try {
+      await this.audio.play();
+      this.isPlaying = true;
+      this.toggleButton.textContent = "⏸️";
+      this.toggleButton.classList.add("playing");
+    } catch (error) {
+      this.handleError(error);
+    }
+  },
+
+  pause() {
+    this.audio.pause();
+    this.isPlaying = false;
+    this.toggleButton.textContent = "▶️";
+    this.toggleButton.classList.remove("playing");
+  },
+
+  updateVolume() {
+    const volume = this.volumeSlider.value / 100;
+    this.audio.volume = volume;
   },
 
   handleError(error) {
@@ -79,64 +131,31 @@ const musicPlayer = {
     const playerElement = document.querySelector(".music-player");
     if (!playerElement) return;
 
-    if (this.toggleButton) {
-      this.toggleButton.classList.remove("playing");
-      this.toggleButton.textContent = "▶️";
-    }
+    // Remover mensagens de erro antigas
+    const oldError = playerElement.querySelector(".error-message");
+    if (oldError) oldError.remove();
 
+    // Criar nova mensagem de erro
     const errorMsg = document.createElement("div");
     errorMsg.className = "error-message";
     errorMsg.textContent =
-      "Erro ao carregar áudio. Por favor, tente novamente.";
+      "Erro ao carregar áudio. Verifique se o arquivo existe.";
     playerElement.appendChild(errorMsg);
 
-    setTimeout(() => errorMsg.remove(), 3000);
-  },
-
-  togglePlay() {
-    if (!this.audio) return;
-
-    if (this.audio.paused) {
-      // Tentar reproduzir com tratamento de erro
-      this.audio.play().catch((error) => {
-        console.error("Erro ao reproduzir áudio:", error);
-        this.handleError(error);
-      });
-      this.toggleButton.classList.add("playing");
-      this.toggleButton.textContent = "⏸️"; // Emoji pause
-    } else {
-      this.audio.pause();
+    // Reset do player
+    this.isPlaying = false;
+    if (this.toggleButton) {
+      this.toggleButton.textContent = "▶️";
       this.toggleButton.classList.remove("playing");
-      this.toggleButton.textContent = "▶️"; // Emoji play
     }
-  },
 
-  updateVolume() {
-    if (!this.audio || !this.volumeSlider) return;
-
-    const volume = this.volumeSlider.value / 100;
-    this.audio.volume = volume;
-
-    // Atualizar ícone do volume baseado no nível
-    this.updateVolumeIcon(volume);
-  },
-
-  updateVolumeIcon(volume) {
-    const volumeIcon = document.querySelector(".volume-icon");
-    if (!volumeIcon) return;
-
-    if (volume === 0) {
-      volumeIcon.textContent = "🔇"; // mudo
-    } else if (volume < 0.3) {
-      volumeIcon.textContent = "🔈"; // volume baixo
-    } else if (volume < 0.7) {
-      volumeIcon.textContent = "🔉"; // volume médio
-    } else {
-      volumeIcon.textContent = "🔊"; // volume alto
-    }
+    // Remover mensagem após 3 segundos
+    setTimeout(() => errorMsg.remove(), 3000);
   },
 };
 
+//Efeitos de Scroll
+// Função para adicionar efeitos de scroll
 function initializeScrollEffects() {
   const observer = new IntersectionObserver(
     (entries) => {
