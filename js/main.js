@@ -17,7 +17,7 @@ const musicPlayer = {
     "theme-principal": "./audio/theme-principal.mp3",
     "battle-theme": "./audio/battle-theme.mp3",
   },
-
+  // Inicializa o player de música
   init() {
     this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
@@ -39,7 +39,7 @@ const musicPlayer = {
     this.setupEventListeners();
     this.updateVolume(); // Configurar volume inicial
   },
-
+  // Adiciona os eventos necessários para o player de música
   setupEventListeners() {
     this.selector.addEventListener("change", () => this.changeMusic());
     this.toggleButton.addEventListener("click", () => this.togglePlay());
@@ -53,7 +53,7 @@ const musicPlayer = {
 
     this.audio.addEventListener("error", (e) => this.handleError(e));
   },
-
+  // Altera a música selecionada
   async changeMusic() {
     const selectedValue = this.selector.value;
     if (!selectedValue) return;
@@ -85,7 +85,7 @@ const musicPlayer = {
       this.handleError(error);
     }
   },
-
+  // Alterna entre tocar e pausar a música
   async togglePlay() {
     if (!this.audio.src && this.selector.value) {
       await this.changeMusic();
@@ -101,7 +101,7 @@ const musicPlayer = {
       this.handleError(error);
     }
   },
-
+  // Toca a música
   async play() {
     try {
       await this.audio.play();
@@ -112,19 +112,19 @@ const musicPlayer = {
       this.handleError(error);
     }
   },
-
+  // Pausa a música
   pause() {
     this.audio.pause();
     this.isPlaying = false;
     this.toggleButton.textContent = "▶️";
     this.toggleButton.classList.remove("playing");
   },
-
+  // Atualiza o volume do áudio
   updateVolume() {
     const volume = this.volumeSlider.value / 100;
     this.audio.volume = volume;
   },
-
+  // Verifica se o arquivo de áudio existe e lida com erros
   handleError(error) {
     console.error("Erro no áudio:", error);
 
@@ -216,7 +216,7 @@ const galleryManager = {
     this.renderGalleryItems(galleryGrid, galleryItems);
     this.setupModal(galleryItems);
   },
-
+  // Adiciona a galeria de imagens da biografia
   setupBioImageGallery() {
     const mainImage = document.querySelector(".bio-image .main-image");
     const thumbnails = document.querySelectorAll(".bio-small-images img");
@@ -226,7 +226,7 @@ const galleryManager = {
     thumbnails[0].classList.add("active-thumb");
     this.setupThumbnailEvents(mainImage, thumbnails);
   },
-
+  // Adiciona os itens da galeria
   renderGalleryItems(grid, items) {
     items.forEach((item, index) => {
       const galleryItem = document.createElement("div");
@@ -246,7 +246,7 @@ const galleryManager = {
       grid.appendChild(galleryItem);
     });
   },
-
+  // Adiciona o modal para exibir imagens ampliadas
   setupModal(items) {
     const modal = document.createElement("div");
     modal.className = "modal";
@@ -290,7 +290,7 @@ const galleryManager = {
     modal.querySelector(".prev-btn").disabled = index === 0;
     modal.querySelector(".next-btn").disabled = index === items.length - 1;
   },
-
+  // Adiciona eventos de clique para as miniaturas
   setupThumbnailEvents(mainImage, thumbnails) {
     thumbnails.forEach((thumb) => {
       thumb.addEventListener("click", () => {
@@ -451,6 +451,7 @@ function initializeUI() {
   initializeAnimations();
 }
 
+// Função para inicializar o menu móvel
 function initializeMobileMenu() {
   const hamburger = document.querySelector(".hamburger");
   const navLinks = document.querySelector(".nav-links");
@@ -472,6 +473,7 @@ function initializeMobileMenu() {
   });
 }
 
+// Função para inicializar o comportamento de scroll
 function initializeScrollBehavior() {
   const header = document.querySelector(".navbar");
   let lastScroll = 0;
@@ -486,6 +488,7 @@ function initializeScrollBehavior() {
   });
 }
 
+// Função para inicializar animações
 function initializeAnimations() {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -554,7 +557,7 @@ const magicSystem = {
       });
     });
   },
-
+  // Adiciona efeitos de feitiço
   setupSpellEffects() {
     const spellItems = document.querySelectorAll(".spell-item");
 
@@ -598,7 +601,7 @@ const magicSystem = {
     icon.style.transform = "";
     icon.style.filter = "";
   },
-
+  // Cria partículas de feitiço
   createSpellParticles(spellElement) {
     const particlesCount = 20;
     const colors = ["#8265A7", "#44318D", "#E0D5F5"];
@@ -638,7 +641,7 @@ const magicSystem = {
       ).onfinish = () => particle.remove();
     }
   },
-
+  // Adiciona animação de entrada para os feitiços
   animateSpells(category) {
     const spells = category.querySelectorAll(".spell-item");
     spells.forEach((spell, index) => {
@@ -654,6 +657,7 @@ const magicSystem = {
   },
 };
 
+// Função para criar partículas na galeria
 function createGalleryParticles() {
   const gallery = document.querySelector("#galeria");
   const particlesContainer = document.createElement("div");
