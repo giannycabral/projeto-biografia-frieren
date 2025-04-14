@@ -36,31 +36,36 @@ const musicPlayer = {
       return;
     }
 
-    // Event Listeners
     this.setupEventListeners();
     this.updateVolume();
   },
 
-  // Adiciona os eventos necessários para o player de música
-  setupEventListeners() {
-    this.selector.addEventListener("change", async () => {
-      await this.changeMusic();
-    });
+  async loadAudio(audioPath) {
+    try {
+      // Verificar se o arquivo existe
+      const response = await fetch(audioPath);
+      if (!response.ok) {
+        throw new Error(`Arquivo de áudio não encontrado: ${audioPath}`);
+      }
 
-    this.toggleButton.addEventListener("click", async () => {
-      await this.togglePlay();
-    });
+      // Limpar fonte atual
+      this.audio.innerHTML = "";
 
-    this.volumeSlider.addEventListener("input", () => {
-      this.updateVolume();
-    });
+      // Adicionar nova fonte
+      const source = document.createElement("source");
+      source.src = audioPath;
+      source.type = "audio/mpeg";
+      this.audio.appendChild(source);
 
-    // Listener para erros de áudio
-    this.audio.addEventListener("error", (e) => {
-      this.handleError(e);
-    });
+      // Carregar o áudio
+      await this.audio.load();
+
+      return true;
+    } catch (error) {
+      this.handleError(error);
+      return false;
+    }
   },
-
   // Altera a música selecionada
   async changeMusic() {
     if (this.isLoading) return;
@@ -81,18 +86,8 @@ const musicPlayer = {
         throw new Error("Caminho do áudio não encontrado");
       }
 
-      // Verificar se o arquivo existe
-      const response = await fetch(audioPath);
-      if (!response.ok) {
-        throw new Error(`Arquivo de áudio não encontrado: ${audioPath}`);
-      }
-
-      this.audio.src = audioPath;
-      this.currentTrack = selectedValue;
-
-      await this.audio.load();
-
-      if (this.toggleButton.classList.contains("playing")) {
+      const loaded = await this.loadAudio(audioPath);
+      if (loaded && this.toggleButton.classList.contains("playing")) {
         await this.play();
       }
     } catch (error) {
@@ -109,6 +104,7 @@ const musicPlayer = {
     try {
       if (!this.audio.src && this.selector.value) {
         await this.changeMusic();
+        return;
       }
 
       if (this.audio.paused) {
@@ -145,24 +141,24 @@ const musicPlayer = {
   handleError(error) {
     console.error("Erro no áudio:", error);
 
-    // Reset do player
     this.isLoading = false;
     if (this.toggleButton) {
       this.toggleButton.textContent = "▶️";
       this.toggleButton.classList.remove("playing");
     }
 
-    // Mostrar mensagem de erro
     const playerElement = document.querySelector(".music-player");
     if (!playerElement) return;
 
+    // Limpar mensagens de erro anteriores
     const oldError = playerElement.querySelector(".error-message");
     if (oldError) oldError.remove();
 
+    // Criar nova mensagem de erro
     const errorMsg = document.createElement("div");
     errorMsg.className = "error-message";
     errorMsg.textContent =
-      "Erro ao carregar áudio. Verifique se o arquivo existe.";
+      error.message || "Erro ao carregar áudio. Verifique se o arquivo existe.";
     playerElement.appendChild(errorMsg);
 
     // Remover mensagem após 3 segundos

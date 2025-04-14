@@ -1529,7 +1529,11 @@ a {
     transition: all 0.3s ease;
 }
 
-.music-toggle.playing {
+.music-player .music-toggle {
+    transition: all 0.3s ease;
+}
+
+.music-player .music-toggle.playing {
     background-color: var(--accent-color);
     color: white;
 }
