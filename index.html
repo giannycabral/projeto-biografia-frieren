@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#2a1b3d" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#2a1b3d" media="(prefers-color-scheme: dark)">
     <meta name="msapplication-navbutton-color" content="#2a1b3d">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#2a1b3d">
     <meta property="og:title" content="Frieren: Biografia">
     <meta property="og:description" content="Biografia da maga Frieren do anime Sousou no Frieren">
@@ -386,22 +386,16 @@
             </div>
         </div>
 
-        <div id="musicPlayer" class="music-player" aria-label="Controles de música">
-            <div class="music-controls">
-                <label for="musicSelector">Selecione uma música:</label>
-                <select id="musicSelector" aria-label="Selecione uma música">
-                    <option value="/audio/HoliznaPATREON - Summer Crush.mp3">Summer Crush</option>
-                    <option value="/audio/Sousou no Frieren Opening ｜ YOASOBI - Yuusha (Instrumental).mp3">Tema
-                        Principal</option>
-                    <option value="/audio/slay-that-dragon-by-tentavox-286027.mp3">Tema de Batalha</option>
-                </select>
-                <button id="toggleMusic" class="music-toggle" aria-label="Tocar/Pausar música">🎵</button>
-                <input type="range" id="volumeSlider" min="0" max="100" value="50" aria-label="Controle de volume"
-                    title="Volume">
-            </div>
-            <audio id="bgMusic" preload="auto">
-                <source src="" type="audio/mp3">
+        <!-- No seu arquivo HTML onde o áudio é usado -->
+        <div class="audio-player">
+            <audio preload="metadata">
+                <!-- Forneça múltiplos formatos para maior compatibilidade -->
+                <source src="./audio/seu-audio.mp3" type="audio/mpeg">
+                <source src="./audio/seu-audio.ogg" type="audio/ogg">
+                <source src="./audio/seu-audio.wav" type="audio/wav">
+                Seu navegador não suporta o elemento de áudio.
             </audio>
+            <button class="play-btn" aria-label="Repr0oduzir áudio">▶</button>
         </div>
 
         <section id="galeria">
@@ -417,6 +411,7 @@
                 <!-- Videos serão carregados via JavaScript -->
             </div>
         </section>
+
     </main>
 
     <footer>

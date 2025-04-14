@@ -11,53 +11,67 @@ const CONFIG = {
 };
 
 // Player de Música
-const musicPlayer = {
-  init() {
-    const audio = document.getElementById("bgMusic");
-    const toggle = document.getElementById("toggleMusic");
-    const selector = document.getElementById("musicSelector");
-    const volume = document.getElementById("volumeSlider");
-    let isPlaying = false;
+function setupAudioPlayer() {
+  const audioPlayer = document.querySelector(".audio-player");
+  if (!audioPlayer) return;
 
-    if (!audio || !toggle || !selector || !volume) return;
+  const audio = audioPlayer.querySelector("audio");
+  const playBtn = audioPlayer.querySelector(".play-btn");
 
-    audio.volume = volume.value / 100;
-    audio.src = selector.value;
-    audio.load();
+  if (!audio || !playBtn) return;
 
-    toggle.addEventListener("click", () => {
-      isPlaying
-        ? audio.pause()
-        : audio.play().catch((error) => this.handleError(error));
-      toggle.textContent = isPlaying ? "🎵" : "⏸";
-      isPlaying = !isPlaying;
-    });
+  // Verificar se os arquivos de áudio existem
+  const audioSources = audio.querySelectorAll("source");
+  let hasValidSource = false;
 
-    selector.addEventListener("change", () => {
-      audio.src = selector.value;
+  audioSources.forEach((source) => {
+    // Teste para verificar se o arquivo existe
+    fetch(source.src)
+      .then((response) => {
+        if (response.ok) {
+          hasValidSource = true;
+          console.log(`Fonte de áudio válida: ${source.src}`);
+        }
+      })
+      .catch((error) => {
+        console.warn(`Fonte de áudio não encontrada: ${source.src}`);
+      });
+  });
+
+  playBtn.addEventListener("click", function () {
+    if (audio.paused) {
+      audio.play().catch((err) => {
+        console.error("Erro ao reproduzir áudio:", err.message);
+        // Fornecer feedback visual para o usuário
+        playBtn.classList.add("error");
+        setTimeout(() => playBtn.classList.remove("error"), 1000);
+      });
+    } else {
+      audio.pause();
+    }
+
+    this.classList.toggle("playing", !audio.paused);
+  });
+
+  audio.addEventListener("ended", function () {
+    playBtn.classList.remove("playing");
+  });
+
+  // Tratamento de erro melhorado
+  audio.addEventListener("error", function (e) {
+    console.error("Erro no áudio:", e);
+    playBtn.classList.add("error");
+
+    // Tentar carregar um áudio alternativo
+    if (!hasValidSource) {
+      const fallbackAudio = document.createElement("source");
+      fallbackAudio.src = "./audio/fallback-audio.mp3";
+      fallbackAudio.type = "audio/mpeg";
+      audio.appendChild(fallbackAudio);
       audio.load();
-      if (isPlaying) audio.play().catch((error) => this.handleError(error));
-    });
-
-    volume.addEventListener(
-      "input",
-      (e) => (audio.volume = e.target.value / 100)
-    );
-  },
-
-  handleError(error) {
-    console.error("Erro no áudio:", error);
-    this.showErrorMessage("Erro ao carregar áudio. Tente novamente.");
-  },
-
-  showErrorMessage(message) {
-    const errorMessage = document.createElement("div");
-    errorMessage.className = "error-message";
-    errorMessage.textContent = message;
-    document.querySelector(".music-player").appendChild(errorMessage);
-    setTimeout(() => errorMessage.remove(), 3000);
-  },
-};
+    }
+  });
+}
 
 function initializeScrollEffects() {
   const observer = new IntersectionObserver(
