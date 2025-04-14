@@ -389,17 +389,21 @@
             <div class="music-controls">
                 <label for="musicSelector">Selecione uma música:</label>
                 <select id="musicSelector" aria-label="Selecione uma música">
-                    <option value="/audio/HoliznaPATREON - Summer Crush.mp3">Summer Crush</option>
-                    <option value="/audio/Sousou no Frieren Opening ｜ YOASOBI - Yuusha (Instrumental).mp3">Tema
-                        Principal</option>
-                    <option value="/audio/slay-that-dragon-by-tentavox-286027.mp3">Tema de Batalha</option>
+                    <option value="./audio/summer-crush.mp3">Summer Crush</option>
+                    <option value="./audio/theme-principal.mp3">Tema Principal</option>
+                    <option value="./audio/battle-theme.mp3">Tema de Batalha</option>
                 </select>
-                <button id="toggleMusic" class="music-toggle" aria-label="Tocar/Pausar música">🎵</button>
-                <input type="range" id="volumeSlider" min="0" max="100" value="50" aria-label="Controle de volume"
-                    title="Volume">
+                <button id="toggleMusic" class="music-toggle" aria-label="Tocar/Pausar música">▶️</button>
+                <div class="volume-control">
+                    <span class="volume-icon">🔊</span>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" aria-label="Controle de volume"
+                        title="Volume">
+                </div>
             </div>
             <audio id="bgMusic" preload="auto">
-                <source src="" type="audio/mp3">
+                <source src="" type="audio/mpeg">
+                <source src="" type="audio/ogg">
+                Seu navegador não suporta o elemento de áudio.
             </audio>
         </div>
 

@@ -13,49 +13,143 @@ const CONFIG = {
 // Player de Música
 const musicPlayer = {
   init() {
-    const audio = document.getElementById("bgMusic");
-    const toggle = document.getElementById("toggleMusic");
-    const selector = document.getElementById("musicSelector");
-    const volume = document.getElementById("volumeSlider");
-    let isPlaying = false;
+    this.audio = document.getElementById("bgMusic");
+    this.selector = document.getElementById("musicSelector");
+    this.toggleButton = document.getElementById("toggleMusic");
+    this.volumeSlider = document.getElementById("volumeSlider");
 
-    if (!audio || !toggle || !selector || !volume) return;
+    if (
+      !this.audio ||
+      !this.selector ||
+      !this.toggleButton ||
+      !this.volumeSlider
+    ) {
+      console.error("Elementos do player não encontrados");
+      return;
+    }
 
-    audio.volume = volume.value / 100;
-    audio.src = selector.value;
-    audio.load();
+    // Configurar fonte inicial do áudio
+    if (this.selector.value) {
+      this.audio.innerHTML = `
+            <source src="${this.selector.value}" type="audio/mpeg">
+            <source src="${this.selector.value.replace(
+              ".mp3",
+              ".ogg"
+            )}" type="audio/ogg">
+        `;
+    }
 
-    toggle.addEventListener("click", () => {
-      isPlaying
-        ? audio.pause()
-        : audio.play().catch((error) => this.handleError(error));
-      toggle.textContent = isPlaying ? "🎵" : "⏸";
-      isPlaying = !isPlaying;
+    // Event Listeners
+    this.selector.addEventListener("change", () => this.changeMusic());
+    this.toggleButton.addEventListener("click", () => this.togglePlay());
+    this.volumeSlider.addEventListener("input", () => this.updateVolume());
+
+    // Tratamento de erros
+    this.audio.addEventListener("error", (e) => {
+      console.error("Erro no áudio:", e);
+      this.handleError(e);
     });
 
-    selector.addEventListener("change", () => {
-      audio.src = selector.value;
-      audio.load();
-      if (isPlaying) audio.play().catch((error) => this.handleError(error));
-    });
+    // Configurar fonte inicial do áudio com verificação
+    if (this.selector.value) {
+      const audioPath = this.selector.value;
 
-    volume.addEventListener(
-      "input",
-      (e) => (audio.volume = e.target.value / 100)
-    );
+      // Verificar se o arquivo existe antes de tentar reproduzir
+      fetch(audioPath)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Arquivo de áudio não encontrado: ${audioPath}`);
+          }
+          // Configurar áudio após confirmar que arquivo existe
+          this.audio.innerHTML = `
+            <source src="${audioPath}" type="audio/mpeg">
+            <source src="${audioPath.replace(".mp3", ".ogg")}" type="audio/ogg">
+            Seu navegador não suporta o elemento de áudio.
+          `;
+          this.audio.load();
+        })
+        .catch((error) => {
+          console.error(error);
+          this.handleError(error);
+        });
+    }
+
+    // Configurar volume inicial
+    this.audio.volume = this.volumeSlider.value / 100;
+  },
+
+  changeMusic() {
+    const selectedValue = this.selector.value;
+    if (!selectedValue) return;
+
+    this.audio.innerHTML = `
+        <source src="${selectedValue}" type="audio/mpeg">
+        <source src="${selectedValue.replace(".mp3", ".ogg")}" type="audio/ogg">
+    `;
+
+    this.audio.load();
+    if (this.toggleButton.classList.contains("playing")) {
+      this.audio.play().catch(this.handleError);
+    }
   },
 
   handleError(error) {
     console.error("Erro no áudio:", error);
-    this.showErrorMessage("Erro ao carregar áudio. Tente novamente.");
+    this.toggleButton.classList.remove("playing");
+
+    // Mostrar mensagem de erro para o usuário
+    const playerElement = document.querySelector(".music-player");
+    const errorMsg = document.createElement("div");
+    errorMsg.className = "error-message";
+    errorMsg.textContent =
+      "Erro ao carregar áudio. Por favor, tente novamente.";
+    playerElement.appendChild(errorMsg);
+
+    // Remover mensagem após 3 segundos
+    setTimeout(() => errorMsg.remove(), 3000);
   },
 
-  showErrorMessage(message) {
-    const errorMessage = document.createElement("div");
-    errorMessage.className = "error-message";
-    errorMessage.textContent = message;
-    document.querySelector(".music-player").appendChild(errorMessage);
-    setTimeout(() => errorMessage.remove(), 3000);
+  togglePlay() {
+    if (!this.audio) return;
+
+    if (this.audio.paused) {
+      // Tentar reproduzir com tratamento de erro
+      this.audio.play().catch((error) => {
+        console.error("Erro ao reproduzir áudio:", error);
+        this.handleError(error);
+      });
+      this.toggleButton.classList.add("playing");
+      this.toggleButton.textContent = "⏸️"; // Emoji pause
+    } else {
+      this.audio.pause();
+      this.toggleButton.classList.remove("playing");
+      this.toggleButton.textContent = "▶️"; // Emoji play
+    }
+  },
+
+  updateVolume() {
+    if (!this.audio || !this.volumeSlider) return;
+
+    const volume = this.volumeSlider.value / 100;
+    this.audio.volume = volume;
+
+    // Atualizar ícone do volume baseado no nível
+    this.updateVolumeIcon(volume);
+  },
+
+  updateVolumeIcon(volume) {
+    const volumeIcon = document.querySelector(".volume-icon");
+    if (!volumeIcon) return;
+
+    if (volume === 0) {
+      volumeIcon.textContent = "🔇"; // mudo
+    } else if (volume < 0.3) {
+      volumeIcon.textContent = "🔈"; // volume baixo
+    } else if (volume < 0.7) {
+      volumeIcon.textContent = "🔉"; // volume médio
+    } else {
+      volumeIcon.textContent = "🔊"; // volume alto
+    }
   },
 };
 

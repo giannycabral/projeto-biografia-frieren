@@ -1503,6 +1503,14 @@ a {
     /* Garantir que não ocupe toda a altura */
 }
 
+.music-player .error-message {
+    color: #ff4444;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
 .music-controls {
     display: flex;
     flex-direction: column;
@@ -1537,6 +1545,7 @@ a {
     border-radius: 6px;
     font-size: 0.9rem;
 }
+
 
 /* Botão Voltar ao Topo */
 .back-to-top {
@@ -1793,12 +1802,10 @@ footer::after {
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(30px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
