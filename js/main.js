@@ -40,26 +40,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/// Player de Música simplificado
+// Otimização do musicPlayer para carregamento mais rápido
 const musicPlayer = {
-  // Definição simplificada dos arquivos de áudio
+  // Definição dos arquivos de áudio
   audioFiles: {
     "summer-crush": CONFIG.AUDIO_PATH + "summer-crush.mp3",
     "theme-principal": CONFIG.AUDIO_PATH + "theme-principal.mp3",
     "battle-theme": CONFIG.AUDIO_PATH + "battle-theme.mp3",
   },
 
-  // Mantém apenas formatos que você realmente vai usar
-  audioFormats: {
-    mp3: "audio/mpeg",
-  },
+  // Pré-carregamento das fontes de áudio
+  audioSources: {},
 
   isInitialized: false,
+  currentAudio: null,
 
   init() {
     console.log("Inicializando player de música...");
 
-    // Obter elementos do DOM com os mesmos IDs que estavam no HTML anterior
+    // Obter elementos do DOM
     this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
     this.toggleButton = document.getElementById("toggleMusic");
@@ -79,6 +78,9 @@ const musicPlayer = {
     // Configurar event listeners
     this.setupEventListeners();
 
+    // Carregar versões de baixa qualidade dos arquivos de áudio para carregamento mais rápido
+    this.preloadAudioSources();
+
     // Definir volume inicial
     this.updateVolume();
 
@@ -86,6 +88,29 @@ const musicPlayer = {
     this.isInitialized = true;
 
     console.log("Player de música inicializado com sucesso");
+  },
+
+  // Pré-carrega fontes de áudio para resposta mais rápida
+  preloadAudioSources() {
+    for (const [key, path] of Object.entries(this.audioFiles)) {
+      // Criar um objeto de áudio para cada fonte
+      const source = new Audio();
+
+      // Configurar para baixa latência e baixa qualidade inicial
+      source.preload = "metadata"; // Apenas carregar metadados inicialmente
+      source.volume = 0; // Mudo durante o preload
+
+      // Configurar o caminho do arquivo
+      source.src = path;
+
+      // Armazenar o objeto para uso posterior
+      this.audioSources[key] = source;
+
+      // Iniciar carregamento parcial dos metadados
+      source.load();
+
+      console.log(`Pré-carregando metadata para: ${key}`);
+    }
   },
 
   setupEventListeners() {
@@ -99,11 +124,38 @@ const musicPlayer = {
     this.toggleButton.addEventListener("click", () => {
       console.log("Botão de play/pause clicado");
       this.togglePlay();
+
+      // Forçar interação do usuário (ajuda com políticas de autoplay)
+      if (!this.audio.paused) {
+        this.audio.muted = false;
+      }
     });
 
     // Atualizar volume quando o slider for alterado
     this.volumeSlider.addEventListener("input", () => {
       this.updateVolume();
+    });
+
+    // Ajustar volume no touchstart para dispositivos móveis (resolva problemas de atraso)
+    this.volumeSlider.addEventListener("touchstart", (e) => {
+      const volume = e.target.value / 100;
+      this.audio.volume = volume;
+    });
+
+    // Transição mais rápida entre músicas
+    this.audio.addEventListener("canplay", () => {
+      // Se o botão estiver no estado "playing", começar a tocar imediatamente
+      if (
+        this.toggleButton.classList.contains("playing") &&
+        this.audio.paused
+      ) {
+        const playPromise = this.audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) =>
+            console.error("Erro ao reproduzir após canplay:", error)
+          );
+        }
+      }
     });
 
     // Lidar com erros de áudio
@@ -138,15 +190,32 @@ const musicPlayer = {
       this.audio.pause();
     }
 
+    // Remover fontes de áudio existentes
+    while (this.audio.firstChild) {
+      this.audio.removeChild(this.audio.firstChild);
+    }
+
+    // Usar o objeto de áudio pré-carregado, se existir
+    this.currentAudio = selectedValue;
+
     // Definir o source do áudio
     this.audio.src = this.audioFiles[selectedValue];
 
-    // Carregar o áudio
+    // Aplicar configurações de baixa latência
+    this.audio.preload = "auto";
+
+    // Carregar o áudio rapidamente
     this.audio.load();
+
+    // Iniciar download completo
+    if (this.audioSources[selectedValue]) {
+      this.audioSources[selectedValue].preload = "auto";
+    }
 
     // Se o botão estiver no estado "playing", tocar a música automaticamente
     if (this.toggleButton.classList.contains("playing")) {
-      this.play();
+      // Esperar um curto intervalo para dar tempo de carregar os metadados
+      setTimeout(() => this.play(), 50);
     }
   },
 
@@ -158,9 +227,11 @@ const musicPlayer = {
 
     // Se não houver música selecionada, escolher uma
     if (!this.audio.src && this.selector.value) {
+      console.log("Nenhum src definido, carregando música selecionada");
       this.changeMusic();
       return;
     } else if (!this.audio.src) {
+      console.log("Nenhuma música selecionada");
       this.showError("Selecione uma música primeiro");
       return;
     }
@@ -176,6 +247,17 @@ const musicPlayer = {
   play() {
     console.log("Tentando reproduzir áudio");
 
+    // Atualizar UI imediatamente para feedback visual rápido
+    this.toggleButton.textContent = "⏸️";
+    this.toggleButton.classList.add("playing");
+
+    // Se o áudio estiver em carregamento, mostrar feedback visual
+    if (this.audio.readyState < 3) {
+      // HAVE_ENOUGH_DATA = 4, HAVE_FUTURE_DATA = 3
+      // Adicionar classe de carregamento ao botão ou mostrar spinner aqui
+      this.toggleButton.textContent = "⌛";
+    }
+
     this.playPromise = this.audio.play();
 
     if (this.playPromise !== undefined) {
@@ -190,11 +272,26 @@ const musicPlayer = {
           this.toggleButton.textContent = "▶️";
           this.toggleButton.classList.remove("playing");
 
-          // Mensagem de erro simplificada
           if (error.name === "NotAllowedError") {
-            this.showError(
-              "Clique na tela para permitir a reprodução de áudio"
-            );
+            // Problema de autoplay
+            this.audio.muted = true; // Tentar mudo (alguns navegadores permitem)
+            const mutePlayPromise = this.audio.play();
+
+            if (mutePlayPromise !== undefined) {
+              mutePlayPromise
+                .then(() => {
+                  // Tocar mudo funcionou, pedir ao usuário para ativar o som
+                  this.showError("Clique novamente para ativar o som");
+                  this.toggleButton.textContent = "🔇";
+                  this.toggleButton.classList.add("playing");
+                })
+                .catch((e) => {
+                  // Falha total no autoplay
+                  this.showError(
+                    "Clique na tela para permitir a reprodução de áudio"
+                  );
+                });
+            }
           } else {
             this.showError("Não foi possível reproduzir o áudio");
           }
@@ -205,20 +302,20 @@ const musicPlayer = {
   pause() {
     console.log("Pausando áudio");
 
+    // Atualizar UI imediatamente para feedback visual rápido
+    this.toggleButton.textContent = "▶️";
+    this.toggleButton.classList.remove("playing");
+
     if (this.playPromise !== undefined) {
       this.playPromise
         .then(() => {
           this.audio.pause();
-          this.toggleButton.textContent = "▶️";
-          this.toggleButton.classList.remove("playing");
         })
         .catch((error) => {
           console.error("Erro ao pausar áudio:", error);
         });
     } else {
       this.audio.pause();
-      this.toggleButton.textContent = "▶️";
-      this.toggleButton.classList.remove("playing");
     }
   },
 
@@ -227,6 +324,15 @@ const musicPlayer = {
 
     const volume = this.volumeSlider.value / 100;
     this.audio.volume = volume;
+
+    // Se estiver mudo devido a autoplay, remover mudo ao ajustar volume
+    if (this.audio.muted && volume > 0) {
+      this.audio.muted = false;
+      if (this.toggleButton.textContent === "🔇") {
+        this.toggleButton.textContent = "⏸️";
+      }
+    }
+
     console.log("Volume atualizado:", volume);
   },
 
@@ -253,10 +359,43 @@ const musicPlayer = {
 
     this.toggleButton.textContent = "▶️";
     this.toggleButton.classList.remove("playing");
+
+    // Tentar uma abordagem alternativa de carregamento
+    this.tryAlternativeLoading();
+  },
+
+  // Tenta método alternativo de carregamento em caso de falha
+  tryAlternativeLoading() {
+    if (!this.currentAudio) return;
+
+    console.log("Tentando método alternativo de carregamento");
+
+    // Alternar para uma abordagem baseada em Fetch para carregar o áudio
+    fetch(this.audioFiles[this.currentAudio])
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Falha ao obter o arquivo de áudio");
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const objectURL = URL.createObjectURL(blob);
+        this.audio.src = objectURL;
+        this.audio.load();
+
+        if (this.toggleButton.classList.contains("playing")) {
+          this.audio
+            .play()
+            .catch((e) => console.error("Erro ao reproduzir após fetch:", e));
+        }
+      })
+      .catch((error) => {
+        console.error("Erro no carregamento alternativo:", error);
+      });
   },
 
   showError(message) {
-    const playerElement = document.querySelector(".music-player");
+    const playerElement = document.querySelector(".floating-music-player");
     if (!playerElement) return;
 
     // Remover mensagens de erro anteriores
@@ -267,7 +406,9 @@ const musicPlayer = {
     const errorMsg = document.createElement("div");
     errorMsg.className = "error-message";
     errorMsg.textContent = message;
-    playerElement.appendChild(errorMsg);
+
+    // Inserir no topo para melhor visibilidade no player flutuante
+    playerElement.insertBefore(errorMsg, playerElement.firstChild);
 
     // Remover após 3 segundos
     setTimeout(() => {
@@ -292,6 +433,7 @@ const musicPlayer = {
   },
 };
 
+// Atualização para o initFloatingMusicPlayer
 function initFloatingMusicPlayer() {
   const floatingPlayer = document.querySelector(".floating-music-player");
   const expandBtn = document.getElementById("expandMusicPlayer");
@@ -302,6 +444,13 @@ function initFloatingMusicPlayer() {
   // Expandir o player
   expandBtn.addEventListener("click", () => {
     floatingPlayer.classList.add("expanded");
+
+    // Iniciar carregamento completo dos audios quando o player é expandido
+    if (musicPlayer.isInitialized) {
+      Object.values(musicPlayer.audioSources).forEach((source) => {
+        source.preload = "auto";
+      });
+    }
   });
 
   // Recolher o player
@@ -309,25 +458,10 @@ function initFloatingMusicPlayer() {
     floatingPlayer.classList.remove("expanded");
   });
 
-  // Ajustar a posição para evitar sobreposição com o botão de voltar ao topo
+  // Posicionamento para evitar botão de voltar ao topo
   const backToTopBtn = document.getElementById("backToTopBtn");
   if (backToTopBtn) {
-    // Posicionamento inicial para evitar sobreposição
-    floatingPlayer.style.bottom = "90px"; // Posiciona o player acima do botão de voltar ao topo
-    floatingPlayer.style.right = "20px";
-
-    // Ajustar posição dinamicamente durante o scroll
-    window.addEventListener("scroll", () => {
-      const isScrolled = window.scrollY > 500;
-
-      if (isScrolled) {
-        // Quando o botão de voltar ao topo estiver visível
-        floatingPlayer.style.bottom = "90px";
-      } else {
-        // Quando o botão de voltar ao topo estiver oculto
-        floatingPlayer.style.bottom = "20px";
-      }
-    });
+    floatingPlayer.style.bottom = "90px";
   }
 }
 
