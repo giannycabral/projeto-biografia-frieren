@@ -10,6 +10,26 @@ const CONFIG = {
   ANIMATION_DELAY: 50,
 };
 
+// Inicializar componentes quando o documento estiver pronto
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    // Inicializar o player de música
+    musicPlayer.init();
+    initializeScrollEffects();
+    galleryManager.init();
+    videoManager.init();
+    heroBackgrounds.init();
+    magicSystem.init();
+    createGalleryParticles();
+
+    // Inicializar outros componentes aqui
+    initializeUI();
+    initBackToTop();
+  } catch (error) {
+    handleGlobalError(error);
+  }
+});
+
 // Player de Música
 const musicPlayer = {
   audioFiles: {
@@ -17,14 +37,14 @@ const musicPlayer = {
     "theme-principal": "./audio/theme-principal.mp3",
     "battle-theme": "./audio/battle-theme.mp3",
   },
+  playPromise: undefined,
+
   // Inicializa o player de música
   init() {
     this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
     this.toggleButton = document.getElementById("toggleMusic");
     this.volumeSlider = document.getElementById("volumeSlider");
-    this.isLoading = false;
-    this.currentTrack = null;
 
     if (
       !this.audio ||
@@ -36,132 +56,108 @@ const musicPlayer = {
       return;
     }
 
-    this.setupEventListeners();
+    // Event Listeners
+    this.selector.addEventListener("change", () => this.changeMusic());
+    this.toggleButton.addEventListener("click", () => this.togglePlay());
+    this.volumeSlider.addEventListener("input", () => this.updateVolume());
+
+    // Inicializar volume
     this.updateVolume();
+
+    console.log("Player de música inicializado com sucesso");
   },
 
-  async loadAudio(audioPath) {
-    try {
-      // Verificar se o arquivo existe
-      const response = await fetch(audioPath);
-      if (!response.ok) {
-        throw new Error(`Arquivo de áudio não encontrado: ${audioPath}`);
-      }
-
-      // Limpar fonte atual
-      this.audio.innerHTML = "";
-
-      // Adicionar nova fonte
-      const source = document.createElement("source");
-      source.src = audioPath;
-      source.type = "audio/mpeg";
-      this.audio.appendChild(source);
-
-      // Carregar o áudio
-      await this.audio.load();
-
-      return true;
-    } catch (error) {
-      this.handleError(error);
-      return false;
-    }
-  },
-  // Altera a música selecionada
-  async changeMusic() {
-    if (this.isLoading) return;
-
+  changeMusic() {
     const selectedValue = this.selector.value;
     if (!selectedValue) return;
 
-    try {
-      this.isLoading = true;
+    const audioPath = this.audioFiles[selectedValue];
+    if (!audioPath) {
+      console.error("Arquivo de áudio não encontrado");
+      return;
+    }
 
-      // Pausar áudio atual se estiver tocando
-      if (!this.audio.paused) {
-        this.audio.pause();
-      }
+    console.log(`Carregando áudio: ${audioPath}`);
 
-      const audioPath = this.audioFiles[selectedValue];
-      if (!audioPath) {
-        throw new Error("Caminho do áudio não encontrado");
-      }
+    // Pausar reprodução atual
+    this.audio.pause();
 
-      const loaded = await this.loadAudio(audioPath);
-      if (loaded && this.toggleButton.classList.contains("playing")) {
-        await this.play();
-      }
-    } catch (error) {
-      this.handleError(error);
-    } finally {
-      this.isLoading = false;
+    // Carregar novo áudio
+    this.audio.src = audioPath;
+    this.audio.load();
+
+    // Se o botão estiver em modo de reprodução, tocar a nova música
+    if (this.toggleButton.classList.contains("playing")) {
+      this.play();
     }
   },
 
-  // Alterna entre tocar e pausar a música
-  async togglePlay() {
-    if (this.isLoading) return;
+  togglePlay() {
+    if (!this.audio.src && this.selector.value) {
+      this.changeMusic();
+      return;
+    }
 
-    try {
-      if (!this.audio.src && this.selector.value) {
-        await this.changeMusic();
-        return;
-      }
-
-      if (this.audio.paused) {
-        await this.play();
-      } else {
-        this.pause();
-      }
-    } catch (error) {
-      this.handleError(error);
+    if (this.audio.paused) {
+      this.play();
+    } else {
+      this.pause();
     }
   },
-  // Toca a música
-  async play() {
-    try {
-      await this.audio.play();
-      this.toggleButton.textContent = "⏸️";
-      this.toggleButton.classList.add("playing");
-    } catch (error) {
-      this.handleError(error);
+
+  play() {
+    console.log("Tentando reproduzir áudio");
+
+    // Salvar referência à promise
+    const playPromise = this.audio.play();
+
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("Áudio reproduzindo com sucesso");
+          this.toggleButton.textContent = "⏸️";
+          this.toggleButton.classList.add("playing");
+        })
+        .catch((error) => {
+          console.error("Erro ao reproduzir áudio:", error);
+          this.toggleButton.textContent = "▶️";
+          this.toggleButton.classList.remove("playing");
+          this.showError(
+            "Não foi possível reproduzir o áudio. Clique novamente."
+          );
+        });
     }
   },
-  // Pausa a música
+
   pause() {
     this.audio.pause();
     this.toggleButton.textContent = "▶️";
     this.toggleButton.classList.remove("playing");
   },
-  // Atualiza o volume do áudio
+
   updateVolume() {
     if (!this.audio || !this.volumeSlider) return;
-    this.audio.volume = this.volumeSlider.value / 100;
+
+    const volume = this.volumeSlider.value / 100;
+    this.audio.volume = volume;
+    console.log(`Volume ajustado para: ${volume}`);
   },
-  // Verifica se o arquivo de áudio existe e lida com erros
-  handleError(error) {
-    console.error("Erro no áudio:", error);
 
-    this.isLoading = false;
-    if (this.toggleButton) {
-      this.toggleButton.textContent = "▶️";
-      this.toggleButton.classList.remove("playing");
-    }
-
+  showError(message) {
     const playerElement = document.querySelector(".music-player");
     if (!playerElement) return;
 
-    // Limpar mensagens de erro anteriores
+    // Remover mensagens de erro anteriores
     const oldError = playerElement.querySelector(".error-message");
     if (oldError) oldError.remove();
 
-    // Criar nova mensagem de erro
+    // Criar mensagem de erro
     const errorMsg = document.createElement("div");
     errorMsg.className = "error-message";
-    errorMsg.textContent =
-      error.message || "Erro ao carregar áudio. Verifique se o arquivo existe.";
+    errorMsg.textContent = message;
     playerElement.appendChild(errorMsg);
 
-    // Remover mensagem após 3 segundos
+    // Remover após 3 segundos
     setTimeout(() => {
       if (errorMsg.parentNode) {
         errorMsg.remove();
@@ -522,10 +518,28 @@ function initializeAnimations() {
     .forEach((el) => observer.observe(el));
 }
 
-// Adicionar gerenciamento de erros global
-window.addEventListener("error", function (e) {
-  console.error("Erro global:", e.error);
-  showErrorMessage("Ocorreu um erro. Por favor, recarregue a página.");
+// Função para tratamento global de erros (para substituir showErrorMessage)
+function handleGlobalError(error) {
+  console.error("Erro global:", error);
+
+  // Mostrar mensagem de erro na interface, se necessário
+  const errorContainer = document.createElement("div");
+  errorContainer.className = "error-message global-error";
+  errorContainer.textContent = error.message || "Ocorreu um erro na aplicação.";
+
+  document.body.appendChild(errorContainer);
+
+  // Remover mensagem após 3 segundos
+  setTimeout(() => {
+    if (errorContainer.parentNode) {
+      errorContainer.remove();
+    }
+  }, 3000);
+}
+
+// Event listener para erros não tratados
+window.addEventListener("error", function (event) {
+  handleGlobalError(event.error || new Error("Erro na aplicação"));
 });
 
 // Adicionar loading state
@@ -733,19 +747,3 @@ function initBackToTop() {
     });
   });
 }
-
-// Garantir que a função é chamada após o carregamento da página
-document.addEventListener("DOMContentLoaded", () => {
-  // Inicializar componentes
-  musicPlayer.init();
-  initializeScrollEffects();
-  galleryManager.init();
-  videoManager.init();
-  heroBackgrounds.init();
-  magicSystem.init();
-  createGalleryParticles();
-
-  // Inicializar componentes UI
-  initializeUI();
-  initBackToTop();
-});

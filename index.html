@@ -8,14 +8,14 @@
     <meta name="theme-color" content="#2a1b3d" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#2a1b3d" media="(prefers-color-scheme: dark)">
     <meta name="msapplication-navbutton-color" content="#2a1b3d">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#2a1b3d">
     <meta property="og:title" content="Frieren: Biografia">
     <meta property="og:description" content="Biografia da maga Frieren do anime Sousou no Frieren">
     <meta property="og:image" content="./images/frieren-10.jpg">
     <meta property="og:type" content="website">
     <meta name="keywords" content="Frieren, anime, maga, biografia">
-    <meta name="author" content="Seu Nome">
+    <meta name="author" content="Regiane Cabral">
     <meta name="robots" content="index, follow">
     <title>Frieren: Biografia</title>
 
@@ -31,7 +31,9 @@
 
     <!-- Adicionar preload para recursos críticos -->
     <link rel="preload" href="./css/style.css" as="style">
-    <link rel="preload" href="./js/main.js" as="script">
+
+    <!-- Adicionar o script no head com defer -->
+    <script src="js/main.js" defer></script>
 
     <!-- Link para o manifest -->
     <link rel="manifest" href="manifest.json">
@@ -45,7 +47,7 @@
                     <img src="./images/logo.png" alt="Logo Frieren" class="nav-logo-img">
                 </a>
             </div>
-            <button class="hamburger" aria-label="Menu">☰</button>
+            <button class="hamburger" id="menuToggle" name="menuToggle" aria-label="Menu">☰</button>
             <ul class="nav-links">
                 <li><a href="#biografia">História</a></li>
                 <li><a href="#timeline">Timeline</a></li>
@@ -249,9 +251,19 @@
                 </div>
 
                 <div class="magic-categories">
-                    <button class="category-btn active" data-category="ofensiva">Ofensiva</button>
-                    <button class="category-btn" data-category="defensiva">Defensiva</button>
-                    <button class="category-btn" data-category="utilidade">Utilidade</button>
+                    <fieldset class="magic-category-group">
+                        <legend>Categorias de Magia</legend>
+                        <div class="category-buttons">
+                            <button class="category-btn active" id="btn-ofensiva" name="btn-ofensiva"
+                                data-category="ofensiva" aria-label="Magias Ofensivas">Ofensiva</button>
+
+                            <button class="category-btn" id="btn-defensiva" name="btn-defensiva"
+                                data-category="defensiva" aria-label="Magias Defensivas">Defensiva</button>
+
+                            <button class="category-btn" id="btn-utilidade" name="btn-utilidade"
+                                data-category="utilidade" aria-label="Magias de Utilidade">Utilidade</button>
+                        </div>
+                    </fieldset>
                 </div>
 
                 <div class="spells-list">
@@ -380,27 +392,31 @@
         <!-- Modal para visualização de imagens -->
         <div class="modal">
             <div class="modal-content">
-                <span class="close-modal">&times;</span>
+                <button type="button" class="close-modal" id="closeModalBtn" name="closeModalBtn"
+                    aria-label="Fechar modal">&times;</button>
                 <img src="" alt="Imagem ampliada" class="modal-image">
             </div>
         </div>
 
+        <!-- Seção de Música -->
+
         <div id="musicPlayer" class="music-player" aria-label="Controles de música">
-            <div class="music-controls">
+            <form id="audioControlForm" class="music-controls">
                 <label for="musicSelector">Selecione uma música:</label>
-                <select id="musicSelector" aria-label="Selecione uma música">
+                <select id="musicSelector" name="musicSelector" aria-label="Selecione uma música">
                     <option value="">Escolha uma música</option>
                     <option value="summer-crush">Summer Crush</option>
                     <option value="theme-principal">Tema Principal</option>
                     <option value="battle-theme">Tema de Batalha</option>
                 </select>
-                <button id="toggleMusic" class="music-toggle" aria-label="Tocar/Pausar música">▶️</button>
+                <button id="toggleMusic" name="toggleMusic" type="button" class="music-toggle"
+                    aria-label="Tocar/Pausar música">▶️</button>
                 <div class="volume-control">
-                    <span class="volume-icon">🔊</span>
-                    <input type="range" id="volumeSlider" min="0" max="100" value="50" aria-label="Controle de volume"
-                        title="Volume">
+                    <label for="volumeSlider" class="volume-icon">🔊</label>
+                    <input type="range" id="volumeSlider" name="volumeSlider" min="0" max="100" value="50"
+                        aria-label="Controle de volume" title="Volume">
                 </div>
-            </div>
+            </form>
             <audio id="bgMusic" preload="metadata"></audio>
         </div>
 
@@ -482,10 +498,7 @@
         </div>
     </footer>
 
-    <script src="js/main.js"></script>
-
-
-    <button class="back-to-top" aria-label="Voltar ao topo">
+    <button class="back-to-top" id="backToTopBtn" name="backToTopBtn" aria-label="Voltar ao topo">
         <i class="fas fa-chevron-up"></i>
     </button>
 </body>
