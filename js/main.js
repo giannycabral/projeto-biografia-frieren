@@ -183,6 +183,32 @@ function initializeScrollEffects() {
   document
     .querySelectorAll(".gallery-item, .video-item, .footer-section")
     .forEach((el) => observer.observe(el));
+} // Adicionar função para pulsar itens ao rolar a tela
+function initializeScrollEffects() {
+  // Criar um observador de interseção
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+
+          // Adicionar efeito de pulso temporário
+          if (entry.target.classList.contains("gallery-item")) {
+            entry.target.style.animation = "pulse 1s ease-out";
+            setTimeout(() => {
+              entry.target.style.animation = "";
+            }, 1000);
+          }
+        }
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  // Observar elementos de galeria, vídeo e seção de footer
+  document
+    .querySelectorAll(".gallery-item, .video-item, .footer-section")
+    .forEach((el) => observer.observe(el));
 }
 
 // Gerenciamento de Galeria
@@ -456,33 +482,34 @@ const heroBackgrounds = {
   },
 };
 
-// Inicialização de UI
+// Inicializar a UI principal
 function initializeUI() {
-  initializeMobileMenu();
-  initializeScrollBehavior();
-  initializeAnimations();
-}
-
-// Função para inicializar o menu móvel
-function initializeMobileMenu() {
-  const hamburger = document.querySelector(".hamburger");
+  // Menu mobile
+  const menuToggle = document.getElementById("menuToggle");
   const navLinks = document.querySelector(".nav-links");
 
-  hamburger.addEventListener("click", () => {
-    navLinks.classList.toggle("show");
-    hamburger.innerHTML = navLinks.classList.contains("show") ? "✕" : "☰";
-  });
+  if (menuToggle && navLinks) {
+    menuToggle.addEventListener("click", () => {
+      navLinks.classList.toggle("show");
+      menuToggle.textContent = navLinks.classList.contains("show") ? "✕" : "☰";
+    });
 
-  document.addEventListener("click", (e) => {
-    if (
-      !e.target.closest(".nav-links") &&
-      !e.target.closest(".hamburger") &&
-      navLinks.classList.contains("show")
-    ) {
-      navLinks.classList.remove("show");
-      hamburger.innerHTML = "☰";
-    }
-  });
+    // Fechar menu ao clicar em um link
+    document.querySelectorAll(".nav-links a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navLinks.classList.remove("show");
+        menuToggle.textContent = "☰";
+      });
+    });
+  }
+
+  // Inicializar efeitos de scroll
+  initializeScrollEffects();
+
+  // Inicializar galeria
+  if (document.querySelector(".gallery-grid")) {
+    createGalleryParticles();
+  }
 }
 
 // Função para inicializar o comportamento de scroll
@@ -518,23 +545,32 @@ function initializeAnimations() {
     .forEach((el) => observer.observe(el));
 }
 
-// Função para tratamento global de erros (para substituir showErrorMessage)
+// Tratar erros globais
 function handleGlobalError(error) {
   console.error("Erro global:", error);
 
-  // Mostrar mensagem de erro na interface, se necessário
+  // Mostrar mensagem de erro na interface
   const errorContainer = document.createElement("div");
   errorContainer.className = "error-message global-error";
+  errorContainer.style.position = "fixed";
+  errorContainer.style.top = "10px";
+  errorContainer.style.left = "50%";
+  errorContainer.style.transform = "translateX(-50%)";
+  errorContainer.style.backgroundColor = "rgba(255, 68, 68, 0.9)";
+  errorContainer.style.color = "white";
+  errorContainer.style.padding = "10px 20px";
+  errorContainer.style.borderRadius = "5px";
+  errorContainer.style.zIndex = "9999";
   errorContainer.textContent = error.message || "Ocorreu um erro na aplicação.";
 
   document.body.appendChild(errorContainer);
 
-  // Remover mensagem após 3 segundos
+  // Remover mensagem após 5 segundos
   setTimeout(() => {
     if (errorContainer.parentNode) {
       errorContainer.remove();
     }
-  }, 3000);
+  }, 5000);
 }
 
 // Event listener para erros não tratados
@@ -689,58 +725,68 @@ const magicSystem = {
 
 // Função para criar partículas na galeria
 function createGalleryParticles() {
-  const gallery = document.querySelector("#galeria");
+  const gallery = document.getElementById("galeria");
+  if (!gallery) return;
+
+  // Criar o contêiner de partículas
   const particlesContainer = document.createElement("div");
   particlesContainer.className = "gallery-particles";
+  gallery.prepend(particlesContainer);
 
-  // Criar 20 partículas
-  for (let i = 0; i < 20; i++) {
+  // Quantidade de partículas
+  const particleCount = 20;
+
+  // Criar partículas
+  for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement("div");
     particle.className = "gallery-particle";
 
+    // Definir tamanho aleatório
+    const size = Math.random() * 6 + 2;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+
     // Posição aleatória
-    particle.style.left = Math.random() * 100 + "%";
-    particle.style.top = Math.random() * 100 + "%";
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.top = `${Math.random() * 100}%`;
 
-    // Atraso de animação aleatório
-    particle.style.animationDelay = Math.random() * 15 + "s";
+    // Propriedades de animação aleatórias
+    const duration = Math.random() * 15 + 5;
+    const delay = Math.random() * 5;
+    particle.style.animationDuration = `${duration}s`;
+    particle.style.animationDelay = `${delay}s`;
 
+    // Cor aleatória
+    const colors = ["#8265a7", "#44318d", "#a98eda", "#e4d3ff"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    particle.style.backgroundColor = color;
+
+    // Opacidade inicial aleatória
+    particle.style.opacity = Math.random() * 0.5 + 0.1;
+
+    // Adicionar partícula ao contêiner
     particlesContainer.appendChild(particle);
   }
 
-  gallery.appendChild(particlesContainer);
+  console.log("Partículas da galeria criadas com sucesso");
 }
 
-// Função para controlar o botão Voltar ao Topo
+// Inicializar o botão de voltar ao topo
 function initBackToTop() {
-  const backToTopButton = document.querySelector(".back-to-top");
+  const backToTopBtn = document.querySelector(".back-to-top");
+  if (!backToTopBtn) return;
 
-  if (!backToTopButton) {
-    console.error('Botão "Voltar ao Topo" não encontrado no DOM');
-    return;
-  }
-
-  // Verificar a posição do scroll imediatamente
-  checkScrollPosition();
-
-  // Adicionar evento de scroll diretamente (sem setTimeout)
-  window.addEventListener("scroll", checkScrollPosition);
-
-  function checkScrollPosition() {
-    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-    console.log(
-      `Scroll position: ${scrollY}, threshold: ${CONFIG.SCROLL_OFFSET}`
-    );
-
-    if (scrollY > CONFIG.SCROLL_OFFSET) {
-      backToTopButton.classList.add("visible");
+  // Mostrar/ocultar botão baseado na posição de rolagem
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 500) {
+      backToTopBtn.classList.add("visible");
     } else {
-      backToTopButton.classList.remove("visible");
+      backToTopBtn.classList.remove("visible");
     }
-  }
+  });
 
-  // Evento de clique para voltar ao topo
-  backToTopButton.addEventListener("click", () => {
+  // Adicionar funcionalidade de rolagem suave
+  backToTopBtn.addEventListener("click", () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
