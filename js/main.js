@@ -6,6 +6,7 @@ const CONFIG = {
   LAZY_LOAD_OFFSET: "50px",
   IMAGE_PLACEHOLDER: "./images/placeholder.jpg",
   ERROR_DISPLAY_TIME: 3000,
+  AUDIO_PATH: "./audio/",
   FADE_DURATION: 300,
   ANIMATION_DELAY: 50,
 };
@@ -22,82 +23,156 @@ document.addEventListener("DOMContentLoaded", () => {
     magicSystem.init();
     createGalleryParticles();
 
+    // Verificar arquivos de áudio (para depuração)
+    musicPlayer.checkAudioFiles();
+
     // Inicializar outros componentes aqui
     initializeUI();
     initBackToTop();
   } catch (error) {
-    handleGlobalError(error);
+    console.error("Erro ao inicializar a aplicação:", error);
   }
 });
 
 // Player de Música
 const musicPlayer = {
   audioFiles: {
-    "summer-crush": "./audio/summer-crush.mp3",
-    "theme-principal": "./audio/theme-principal.mp3",
-    "battle-theme": "./audio/battle-theme.mp3",
+    "summer-crush": CONFIG.AUDIO_PATH + "summer-crush.mp3",
+    "theme-principal": CONFIG.AUDIO_PATH + "theme-principal.mp3",
+    "battle-theme": CONFIG.AUDIO_PATH + "battle-theme.mp3",
   },
-  playPromise: undefined,
 
-  // Inicializa o player de música
+  isInitialized: false,
+
   init() {
+    console.log("Inicializando player de música...");
+
+    // Obter elementos do DOM
     this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
     this.toggleButton = document.getElementById("toggleMusic");
     this.volumeSlider = document.getElementById("volumeSlider");
 
+    // Verificar se todos os elementos necessários existem
     if (
       !this.audio ||
       !this.selector ||
       !this.toggleButton ||
       !this.volumeSlider
     ) {
-      console.error("Elementos do player não encontrados");
+      console.error("Elementos do player de música não encontrados");
       return;
     }
 
-    // Event Listeners
-    this.selector.addEventListener("change", () => this.changeMusic());
-    this.toggleButton.addEventListener("click", () => this.togglePlay());
-    this.volumeSlider.addEventListener("input", () => this.updateVolume());
+    // Configurar event listeners
+    this.setupEventListeners();
 
-    // Inicializar volume
+    // Definir volume inicial
     this.updateVolume();
+
+    // Marcar como inicializado
+    this.isInitialized = true;
 
     console.log("Player de música inicializado com sucesso");
   },
 
-  changeMusic() {
-    const selectedValue = this.selector.value;
-    if (!selectedValue) return;
+  setupEventListeners() {
+    // Mudar música quando o seletor for alterado
+    this.selector.addEventListener("change", () => {
+      console.log("Seleção de música alterada:", this.selector.value);
+      this.changeMusic();
+    });
 
-    const audioPath = this.audioFiles[selectedValue];
-    if (!audioPath) {
-      console.error("Arquivo de áudio não encontrado");
+    // Toggle play/pause quando o botão for clicado
+    this.toggleButton.addEventListener("click", () => {
+      console.log("Botão de play/pause clicado");
+      this.togglePlay();
+    });
+
+    // Atualizar volume quando o slider for alterado
+    this.volumeSlider.addEventListener("input", () => {
+      this.updateVolume();
+    });
+
+    // Lidar com erros de áudio
+    this.audio.addEventListener("error", (e) => {
+      console.error("Erro no elemento de áudio:", e);
+      this.handleAudioError();
+    });
+
+    // Atualizar UI quando a música terminar
+    this.audio.addEventListener("ended", () => {
+      this.toggleButton.textContent = "▶️";
+      this.toggleButton.classList.remove("playing");
+    });
+  },
+
+  changeMusic() {
+    if (!this.isInitialized) {
+      console.error("Player não inicializado");
       return;
     }
 
-    console.log(`Carregando áudio: ${audioPath}`);
+    const selectedValue = this.selector.value;
+    if (!selectedValue) {
+      console.log("Nenhuma música selecionada");
+      return;
+    }
 
-    // Pausar reprodução atual
-    this.audio.pause();
+    // Caminho do arquivo de áudio
+    const audioPath = this.audioFiles[selectedValue];
+    if (!audioPath) {
+      console.error("Caminho do áudio não encontrado para:", selectedValue);
+      this.showError("Arquivo de áudio não encontrado");
+      return;
+    }
 
-    // Carregar novo áudio
+    console.log("Carregando áudio:", audioPath);
+
+    // Pausar qualquer reprodução atual
+    if (!this.audio.paused) {
+      this.audio.pause();
+    }
+
+    // Configurar o src diretamente - mais confiável que innerHTML para áudio
     this.audio.src = audioPath;
+
+    // Carregar o áudio
     this.audio.load();
 
-    // Se o botão estiver em modo de reprodução, tocar a nova música
+    // Log para verificar o status do áudio
+    console.log("Áudio carregado:", {
+      src: this.audio.src,
+      readyState: this.audio.readyState,
+      networkState: this.audio.networkState,
+    });
+
+    // Se o botão estiver no estado "playing", tocar a música automaticamente
     if (this.toggleButton.classList.contains("playing")) {
       this.play();
     }
   },
 
   togglePlay() {
-    if (!this.audio.src && this.selector.value) {
-      this.changeMusic();
+    if (!this.isInitialized) {
+      console.error("Player não inicializado");
       return;
     }
 
+    console.log("Toggle play/pause");
+
+    // Se não houver música selecionada, escolher uma
+    if (!this.audio.src && this.selector.value) {
+      console.log("Nenhum src definido, carregando música selecionada");
+      this.changeMusic();
+      return;
+    } else if (!this.audio.src) {
+      console.log("Nenhuma música selecionada");
+      this.showError("Selecione uma música primeiro");
+      return;
+    }
+
+    // Alternar entre play e pause
     if (this.audio.paused) {
       this.play();
     } else {
@@ -106,13 +181,20 @@ const musicPlayer = {
   },
 
   play() {
-    console.log("Tentando reproduzir áudio");
+    console.log("Tentando reproduzir áudio:", this.audio.src);
 
-    // Salvar referência à promise
-    const playPromise = this.audio.play();
+    // Verificar se há um arquivo de áudio para reproduzir
+    if (!this.audio.src) {
+      console.error("Nenhum src definido para reprodução");
+      this.showError("Selecione uma música primeiro");
+      return;
+    }
 
-    if (playPromise !== undefined) {
-      playPromise
+    // Armazenar a promise retornada por play()
+    this.playPromise = this.audio.play();
+
+    if (this.playPromise !== undefined) {
+      this.playPromise
         .then(() => {
           console.log("Áudio reproduzindo com sucesso");
           this.toggleButton.textContent = "⏸️";
@@ -122,30 +204,86 @@ const musicPlayer = {
           console.error("Erro ao reproduzir áudio:", error);
           this.toggleButton.textContent = "▶️";
           this.toggleButton.classList.remove("playing");
-          this.showError(
-            "Não foi possível reproduzir o áudio. Clique novamente."
-          );
+
+          // Tratar diferentes tipos de erro
+          if (error.name === "NotSupportedError") {
+            this.showError("Formato de áudio não suportado pelo seu navegador");
+          } else if (error.name === "NotAllowedError") {
+            this.showError(
+              "Reprodução automática bloqueada pelo navegador. Clique novamente."
+            );
+          } else {
+            this.showError(
+              "Não foi possível reproduzir o áudio. Clique novamente."
+            );
+          }
         });
     }
   },
 
   pause() {
-    this.audio.pause();
-    this.toggleButton.textContent = "▶️";
-    this.toggleButton.classList.remove("playing");
+    console.log("Pausando áudio");
+
+    if (this.playPromise !== undefined) {
+      this.playPromise
+        .then(() => {
+          this.audio.pause();
+          this.toggleButton.textContent = "▶️";
+          this.toggleButton.classList.remove("playing");
+        })
+        .catch((error) => {
+          console.error("Erro ao pausar áudio:", error);
+        });
+    } else {
+      this.audio.pause();
+      this.toggleButton.textContent = "▶️";
+      this.toggleButton.classList.remove("playing");
+    }
   },
 
   updateVolume() {
-    if (!this.audio || !this.volumeSlider) return;
+    if (!this.isInitialized) return;
 
     const volume = this.volumeSlider.value / 100;
     this.audio.volume = volume;
-    console.log(`Volume ajustado para: ${volume}`);
+    console.log("Volume atualizado:", volume);
+  },
+
+  handleAudioError() {
+    if (!this.audio) return;
+
+    const error = this.audio.error;
+    let message = "Erro ao carregar o áudio";
+
+    if (error) {
+      // Tratar códigos de erro específicos
+      switch (error.code) {
+        case MediaError.MEDIA_ERR_ABORTED:
+          message = "A reprodução foi abortada";
+          break;
+        case MediaError.MEDIA_ERR_NETWORK:
+          message = "Erro de rede ao carregar o áudio";
+          break;
+        case MediaError.MEDIA_ERR_DECODE:
+          message = "Erro ao decodificar o áudio";
+          break;
+        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+          message = "Formato de áudio não suportado";
+          break;
+      }
+    }
+
+    console.error("Erro de áudio:", message, error);
+    this.showError(message);
+    this.toggleButton.textContent = "▶️";
+    this.toggleButton.classList.remove("playing");
   },
 
   showError(message) {
     const playerElement = document.querySelector(".music-player");
     if (!playerElement) return;
+
+    console.error("Erro no player:", message);
 
     // Remover mensagens de erro anteriores
     const oldError = playerElement.querySelector(".error-message");
@@ -162,7 +300,26 @@ const musicPlayer = {
       if (errorMsg.parentNode) {
         errorMsg.remove();
       }
-    }, 3000);
+    }, CONFIG.ERROR_DISPLAY_TIME);
+  },
+
+  // Método para teste manual - verificar se os arquivos existem
+  checkAudioFiles() {
+    console.log("Verificando arquivos de áudio...");
+
+    Object.entries(this.audioFiles).forEach(([key, path]) => {
+      fetch(path, { method: "HEAD" })
+        .then((response) => {
+          if (!response.ok) {
+            console.error(`Arquivo não encontrado: ${path}`);
+          } else {
+            console.log(`Arquivo OK: ${path}`);
+          }
+        })
+        .catch((error) => {
+          console.error(`Erro ao verificar ${path}:`, error);
+        });
+    });
   },
 };
 
