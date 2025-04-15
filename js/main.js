@@ -382,9 +382,12 @@ function initFloatingMusicPlayer() {
     floatingPlayer.classList.add("expanded");
 
     // Iniciar carregamento completo dos audios quando o player é expandido
-    if (musicPlayer.isInitialized) {
-      Object.values(musicPlayer.audioSources).forEach((source) => {
-        source.preload = "auto";
+    if (musicPlayer.isInitialized && musicPlayer.sounds) {
+      // Agora usamos musicPlayer.sounds que está definido, em vez de audioSources
+      Object.values(musicPlayer.sounds).forEach((sound) => {
+        if (sound && typeof sound.load === "function") {
+          sound.load();
+        }
       });
     }
   });
