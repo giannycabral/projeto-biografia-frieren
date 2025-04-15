@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Otimização do musicPlayer para carregamento mais rápido
+
 const musicPlayer = {
   // Definição dos arquivos de áudio
   audioFiles: {
@@ -49,37 +50,34 @@ const musicPlayer = {
     "battle-theme": CONFIG.AUDIO_PATH + "battle-theme.mp3",
   },
 
-  // Pré-carregamento das fontes de áudio
-  audioSources: {},
+  // Objetos de som
+  sounds: {},
 
-  isInitialized: false,
+  // Música atual
+  currentSound: null,
   currentAudio: null,
 
+  isInitialized: false,
+
   init() {
-    console.log("Inicializando player de música...");
+    console.log("Inicializando player de música com Howler.js...");
 
     // Obter elementos do DOM
-    this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
     this.toggleButton = document.getElementById("toggleMusic");
     this.volumeSlider = document.getElementById("volumeSlider");
 
     // Verificar se todos os elementos necessários existem
-    if (
-      !this.audio ||
-      !this.selector ||
-      !this.toggleButton ||
-      !this.volumeSlider
-    ) {
+    if (!this.selector || !this.toggleButton || !this.volumeSlider) {
       console.error("Elementos do player de música não encontrados");
       return;
     }
 
+    // Pré-carregar sons
+    this.preloadSounds();
+
     // Configurar event listeners
     this.setupEventListeners();
-
-    // Carregar versões de baixa qualidade dos arquivos de áudio para carregamento mais rápido
-    this.preloadAudioSources();
 
     // Definir volume inicial
     this.updateVolume();
@@ -90,26 +88,23 @@ const musicPlayer = {
     console.log("Player de música inicializado com sucesso");
   },
 
-  // Pré-carrega fontes de áudio para resposta mais rápida
-  preloadAudioSources() {
+  // Pré-carrega os sons usando Howler.js
+  preloadSounds() {
     for (const [key, path] of Object.entries(this.audioFiles)) {
-      // Criar um objeto de áudio para cada fonte
-      const source = new Audio();
+      this.sounds[key] = new Howl({
+        src: [path],
+        html5: true, // Para melhor compatibilidade em dispositivos móveis
+        preload: false, // Carregar apenas quando necessário
+        volume: this.volumeSlider ? this.volumeSlider.value / 100 : 0.5,
+        onload: () => console.log(`✓ Som carregado: ${key}`),
+        onloaderror: (id, error) => this.handleLoadError(key, error),
+        onplayerror: (id, error) => this.handlePlayError(key, error),
+      });
 
-      // Configurar para baixa latência e baixa qualidade inicial
-      source.preload = "metadata"; // Apenas carregar metadados inicialmente
-      source.volume = 0; // Mudo durante o preload
+      // Começar a carregar o áudio
+      this.sounds[key].load();
 
-      // Configurar o caminho do arquivo
-      source.src = path;
-
-      // Armazenar o objeto para uso posterior
-      this.audioSources[key] = source;
-
-      // Iniciar carregamento parcial dos metadados
-      source.load();
-
-      console.log(`Pré-carregando metadata para: ${key}`);
+      console.log(`Inicializando carregamento para: ${key}`);
     }
   },
 
@@ -124,50 +119,11 @@ const musicPlayer = {
     this.toggleButton.addEventListener("click", () => {
       console.log("Botão de play/pause clicado");
       this.togglePlay();
-
-      // Forçar interação do usuário (ajuda com políticas de autoplay)
-      if (!this.audio.paused) {
-        this.audio.muted = false;
-      }
     });
 
     // Atualizar volume quando o slider for alterado
     this.volumeSlider.addEventListener("input", () => {
       this.updateVolume();
-    });
-
-    // Ajustar volume no touchstart para dispositivos móveis (resolva problemas de atraso)
-    this.volumeSlider.addEventListener("touchstart", (e) => {
-      const volume = e.target.value / 100;
-      this.audio.volume = volume;
-    });
-
-    // Transição mais rápida entre músicas
-    this.audio.addEventListener("canplay", () => {
-      // Se o botão estiver no estado "playing", começar a tocar imediatamente
-      if (
-        this.toggleButton.classList.contains("playing") &&
-        this.audio.paused
-      ) {
-        const playPromise = this.audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((error) =>
-            console.error("Erro ao reproduzir após canplay:", error)
-          );
-        }
-      }
-    });
-
-    // Lidar com erros de áudio
-    this.audio.addEventListener("error", (e) => {
-      console.error("Erro no elemento de áudio:", e);
-      this.handleAudioError();
-    });
-
-    // Atualizar UI quando a música terminar
-    this.audio.addEventListener("ended", () => {
-      this.toggleButton.textContent = "▶️";
-      this.toggleButton.classList.remove("playing");
     });
   },
 
@@ -185,37 +141,27 @@ const musicPlayer = {
 
     console.log("Carregando música:", selectedValue);
 
-    // Pausar qualquer reprodução atual
-    if (!this.audio.paused) {
-      this.audio.pause();
+    // Pausar qualquer som atual
+    if (this.currentSound) {
+      this.currentSound.stop();
     }
 
-    // Remover fontes de áudio existentes
-    while (this.audio.firstChild) {
-      this.audio.removeChild(this.audio.firstChild);
-    }
-
-    // Usar o objeto de áudio pré-carregado, se existir
+    // Atualizar o som atual
     this.currentAudio = selectedValue;
+    this.currentSound = this.sounds[selectedValue];
 
-    // Definir o source do áudio
-    this.audio.src = this.audioFiles[selectedValue];
-
-    // Aplicar configurações de baixa latência
-    this.audio.preload = "auto";
-
-    // Carregar o áudio rapidamente
-    this.audio.load();
-
-    // Iniciar download completo
-    if (this.audioSources[selectedValue]) {
-      this.audioSources[selectedValue].preload = "auto";
+    // Garantir que o som está carregado
+    if (
+      !this.currentSound.state() ||
+      this.currentSound.state() === "unloaded"
+    ) {
+      this.showLoader(true);
+      this.currentSound.load();
     }
 
     // Se o botão estiver no estado "playing", tocar a música automaticamente
     if (this.toggleButton.classList.contains("playing")) {
-      // Esperar um curto intervalo para dar tempo de carregar os metadados
-      setTimeout(() => this.play(), 50);
+      this.play();
     }
   },
 
@@ -226,18 +172,18 @@ const musicPlayer = {
     }
 
     // Se não houver música selecionada, escolher uma
-    if (!this.audio.src && this.selector.value) {
-      console.log("Nenhum src definido, carregando música selecionada");
+    if (!this.currentSound && this.selector.value) {
+      console.log("Nenhum som ativo, carregando música selecionada");
       this.changeMusic();
       return;
-    } else if (!this.audio.src) {
+    } else if (!this.currentSound) {
       console.log("Nenhuma música selecionada");
       this.showError("Selecione uma música primeiro");
       return;
     }
 
     // Alternar entre play e pause
-    if (this.audio.paused) {
+    if (!this.currentSound.playing()) {
       this.play();
     } else {
       this.pause();
@@ -251,52 +197,28 @@ const musicPlayer = {
     this.toggleButton.textContent = "⏸️";
     this.toggleButton.classList.add("playing");
 
-    // Se o áudio estiver em carregamento, mostrar feedback visual
-    if (this.audio.readyState < 3) {
-      // HAVE_ENOUGH_DATA = 4, HAVE_FUTURE_DATA = 3
-      // Adicionar classe de carregamento ao botão ou mostrar spinner aqui
+    // Se o som ainda estiver carregando, mostrar loader
+    if (!this.currentSound.state() || this.currentSound.state() === "loading") {
       this.toggleButton.textContent = "⌛";
+
+      // Tocar quando terminar de carregar
+      this.currentSound.once("load", () => {
+        this.currentSound.play();
+        this.toggleButton.textContent = "⏸️";
+        this.showLoader(false);
+      });
+
+      // Começar a carregar se ainda não estiver
+      if (this.currentSound.state() !== "loading") {
+        this.showLoader(true);
+        this.currentSound.load();
+      }
+
+      return;
     }
 
-    this.playPromise = this.audio.play();
-
-    if (this.playPromise !== undefined) {
-      this.playPromise
-        .then(() => {
-          console.log("Áudio reproduzindo com sucesso");
-          this.toggleButton.textContent = "⏸️";
-          this.toggleButton.classList.add("playing");
-        })
-        .catch((error) => {
-          console.error("Erro ao reproduzir áudio:", error);
-          this.toggleButton.textContent = "▶️";
-          this.toggleButton.classList.remove("playing");
-
-          if (error.name === "NotAllowedError") {
-            // Problema de autoplay
-            this.audio.muted = true; // Tentar mudo (alguns navegadores permitem)
-            const mutePlayPromise = this.audio.play();
-
-            if (mutePlayPromise !== undefined) {
-              mutePlayPromise
-                .then(() => {
-                  // Tocar mudo funcionou, pedir ao usuário para ativar o som
-                  this.showError("Clique novamente para ativar o som");
-                  this.toggleButton.textContent = "🔇";
-                  this.toggleButton.classList.add("playing");
-                })
-                .catch((e) => {
-                  // Falha total no autoplay
-                  this.showError(
-                    "Clique na tela para permitir a reprodução de áudio"
-                  );
-                });
-            }
-          } else {
-            this.showError("Não foi possível reproduzir o áudio");
-          }
-        });
-    }
+    // Se já estiver carregado, tocar imediatamente
+    this.currentSound.play();
   },
 
   pause() {
@@ -306,16 +228,8 @@ const musicPlayer = {
     this.toggleButton.textContent = "▶️";
     this.toggleButton.classList.remove("playing");
 
-    if (this.playPromise !== undefined) {
-      this.playPromise
-        .then(() => {
-          this.audio.pause();
-        })
-        .catch((error) => {
-          console.error("Erro ao pausar áudio:", error);
-        });
-    } else {
-      this.audio.pause();
+    if (this.currentSound && this.currentSound.playing()) {
+      this.currentSound.pause();
     }
   },
 
@@ -323,75 +237,48 @@ const musicPlayer = {
     if (!this.isInitialized) return;
 
     const volume = this.volumeSlider.value / 100;
-    this.audio.volume = volume;
-
-    // Se estiver mudo devido a autoplay, remover mudo ao ajustar volume
-    if (this.audio.muted && volume > 0) {
-      this.audio.muted = false;
-      if (this.toggleButton.textContent === "🔇") {
-        this.toggleButton.textContent = "⏸️";
-      }
-    }
-
     console.log("Volume atualizado:", volume);
+
+    // Atualizar volume de todos os sons
+    for (const sound of Object.values(this.sounds)) {
+      sound.volume(volume);
+    }
   },
 
-  handleAudioError() {
-    if (!this.audio) return;
+  handleLoadError(key, error) {
+    console.error(`Erro ao carregar áudio ${key}:`, error);
+    this.showError(`Erro ao carregar a música: ${key}`);
+    this.showLoader(false);
+    this.toggleButton.textContent = "▶️";
+    this.toggleButton.classList.remove("playing");
+  },
 
-    const error = this.audio.error;
-    let message = "Erro ao carregar o áudio";
-
-    if (error) {
-      // Mensagens de erro simplificadas
-      switch (error.code) {
-        case MediaError.MEDIA_ERR_NETWORK:
-          message = "Erro de rede ao carregar o áudio";
-          break;
-        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-          message = "Formato de áudio não suportado";
-          break;
-      }
-    }
-
-    console.error("Erro de áudio:", message);
-    this.showError(message);
-
+  handlePlayError(key, error) {
+    console.error(`Erro ao reproduzir áudio ${key}:`, error);
+    this.showError(
+      "Não foi possível reproduzir o áudio. Tente clicar novamente."
+    );
+    this.showLoader(false);
     this.toggleButton.textContent = "▶️";
     this.toggleButton.classList.remove("playing");
 
-    // Tentar uma abordagem alternativa de carregamento
-    this.tryAlternativeLoading();
+    // Tentar recarregar o áudio
+    this.sounds[key].unload();
+    this.sounds[key].load();
   },
 
-  // Tenta método alternativo de carregamento em caso de falha
-  tryAlternativeLoading() {
-    if (!this.currentAudio) return;
-
-    console.log("Tentando método alternativo de carregamento");
-
-    // Alternar para uma abordagem baseada em Fetch para carregar o áudio
-    fetch(this.audioFiles[this.currentAudio])
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Falha ao obter o arquivo de áudio");
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        const objectURL = URL.createObjectURL(blob);
-        this.audio.src = objectURL;
-        this.audio.load();
-
-        if (this.toggleButton.classList.contains("playing")) {
-          this.audio
-            .play()
-            .catch((e) => console.error("Erro ao reproduzir após fetch:", e));
-        }
-      })
-      .catch((error) => {
-        console.error("Erro no carregamento alternativo:", error);
-      });
+  showLoader(show) {
+    if (show) {
+      this.toggleButton.classList.add("loading");
+      this.toggleButton.textContent = "⌛";
+    } else {
+      this.toggleButton.classList.remove("loading");
+      if (this.toggleButton.classList.contains("playing")) {
+        this.toggleButton.textContent = "⏸️";
+      } else {
+        this.toggleButton.textContent = "▶️";
+      }
+    }
   },
 
   showError(message) {
@@ -430,6 +317,55 @@ const musicPlayer = {
           console.error(`Erro ao verificar ${name}:`, error);
         });
     });
+  },
+
+  // Detecta o melhor formato de áudio suportado pelo navegador
+  detectBestSupportedFormat() {
+    const audio = document.createElement("audio");
+
+    // Verificar os formatos em ordem de preferência
+    const formats = [
+      { ext: "mp3", mime: "audio/mpeg" },
+      { ext: "ogg", mime: 'audio/ogg; codecs="vorbis"' },
+      { ext: "wav", mime: "audio/wav" },
+    ];
+
+    for (const format of formats) {
+      const canPlay = audio.canPlayType(format.mime);
+      console.log(`Suporte para ${format.ext}: ${canPlay}`);
+
+      if (canPlay === "probably" || canPlay === "maybe") {
+        return format.ext;
+      }
+    }
+
+    // Fallback para mp3 se nenhum formato for explicitamente suportado
+    return "mp3";
+  },
+
+  checkAudioFilesExistence() {
+    console.log("Verificando a existência dos arquivos de áudio...");
+
+    for (const [name, formats] of Object.entries(this.audioFiles)) {
+      for (const [format, path] of Object.entries(formats)) {
+        fetch(path, { method: "HEAD" })
+          .then((response) => {
+            if (!response.ok) {
+              console.error(
+                `❌ Arquivo ${name}.${format} não encontrado (${path}): ${response.status}`
+              );
+            } else {
+              console.log(`✅ Arquivo ${name}.${format} encontrado (${path})`);
+            }
+          })
+          .catch((error) => {
+            console.error(
+              `❌ Erro ao verificar ${name}.${format} (${path}):`,
+              error
+            );
+          });
+      }
+    }
   },
 };
 

@@ -1653,6 +1653,11 @@ a {
     transform: scale(1.05);
 }
 
+/* Estilo para o botão de loading */
+.music-toggle.loading {
+    animation: pulse 1.5s infinite;
+}
+
 .volume-control {
     display: flex;
     align-items: center;
@@ -2037,7 +2042,7 @@ footer::after {
     }
 
     50% {
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
 
     100% {
