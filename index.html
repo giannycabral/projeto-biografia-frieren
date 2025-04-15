@@ -398,28 +398,7 @@
             </div>
         </div>
 
-        <!-- Seção de Música -->
-
-        <div id="musicPlayer" class="music-player" aria-label="Controles de música">
-            <form id="audioControlForm" class="music-controls">
-                <label for="musicSelector">Selecione uma música:</label>
-                <select id="musicSelector" name="musicSelector" aria-label="Selecione uma música">
-                    <option value="">Escolha uma música</option>
-                    <option value="summer-crush">Summer Crush</option>
-                    <option value="theme-principal">Tema Principal</option>
-                    <option value="battle-theme">Tema de Batalha</option>
-                </select>
-                <button id="toggleMusic" name="toggleMusic" type="button" class="music-toggle"
-                    aria-label="Tocar/Pausar música">▶️</button>
-                <div class="volume-control">
-                    <label for="volumeSlider" class="volume-icon">🔊</label>
-                    <input type="range" id="volumeSlider" name="volumeSlider" min="0" max="100" value="50"
-                        aria-label="Controle de volume" title="Volume">
-                </div>
-            </form>
-            <audio id="bgMusic" preload="metadata"></audio>
-        </div>
-
+        <!-- Seção de Galeria e Vídeos -->
         <section id="galeria">
             <h2>Galeria</h2>
             <div class="gallery-grid">
@@ -435,6 +414,7 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <footer>
         <div class="footer-content">
             <div class="footer-section credits">
@@ -498,9 +478,50 @@
         </div>
     </footer>
 
+    <!-- Botão de voltar ao topo -->
     <button class="back-to-top" id="backToTopBtn" name="backToTopBtn" aria-label="Voltar ao topo">
         <i class="fas fa-chevron-up"></i>
     </button>
+
+    <!-- Player de música fixo -->
+    <div class="floating-music-player" aria-label="Controles de música">
+        <div class="music-toggle-view">
+            <button id="expandMusicPlayer" class="expand-player" aria-label="Expandir player de música">
+                <i class="fas fa-music"></i>
+            </button>
+        </div>
+        <div class="music-controls">
+            <div class="music-header">
+                <h4>Música</h4>
+                <button id="collapseMusicPlayer" class="collapse-player" aria-label="Recolher player">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="music-select-wrapper">
+                <select id="musicSelector" name="musicSelector" aria-label="Selecione uma música">
+                    <option value="">Escolha uma música</option>
+                    <option value="summer-crush">Summer Crush</option>
+                    <option value="theme-principal">Tema Principal</option>
+                    <option value="battle-theme">Tema de Batalha</option>
+                </select>
+            </div>
+            <div class="player-actions">
+                <button id="toggleMusic" name="toggleMusic" type="button" class="music-toggle"
+                    aria-label="Tocar/Pausar música">▶️</button>
+                <div class="volume-control">
+                    <label for="volumeSlider" class="volume-icon">🔊</label>
+                    <input type="range" id="volumeSlider" name="volumeSlider" min="0" max="100" value="50"
+                        aria-label="Controle de volume" title="Volume">
+                </div>
+            </div>
+        </div>
+
+        <audio id="bgMusic" preload="metadata">
+            <!-- Os sources serão adicionados dinamicamente via JavaScript -->
+            Seu navegador não suporta o elemento de áudio HTML5.
+        </audio>
+
+    </div>
 </body>
 
 </html>

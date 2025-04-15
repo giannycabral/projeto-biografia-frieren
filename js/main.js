@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     heroBackgrounds.init();
     magicSystem.init();
     createGalleryParticles();
+    initFloatingMusicPlayer();
 
     // Verificar arquivos de áudio (para depuração)
     musicPlayer.checkAudioFiles();
@@ -29,17 +30,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // Inicializar outros componentes aqui
     initializeUI();
     initBackToTop();
+
+    // Para adaptar o musicPlayer existente, garanta que a função init() seja chamada:
+    if (typeof musicPlayer !== "undefined" && musicPlayer.init) {
+      musicPlayer.init();
+    }
   } catch (error) {
     console.error("Erro ao inicializar a aplicação:", error);
   }
 });
 
-// Player de Música
+/// Player de Música simplificado
 const musicPlayer = {
+  // Definição simplificada dos arquivos de áudio
   audioFiles: {
     "summer-crush": CONFIG.AUDIO_PATH + "summer-crush.mp3",
     "theme-principal": CONFIG.AUDIO_PATH + "theme-principal.mp3",
     "battle-theme": CONFIG.AUDIO_PATH + "battle-theme.mp3",
+  },
+
+  // Mantém apenas formatos que você realmente vai usar
+  audioFormats: {
+    mp3: "audio/mpeg",
   },
 
   isInitialized: false,
@@ -47,7 +59,7 @@ const musicPlayer = {
   init() {
     console.log("Inicializando player de música...");
 
-    // Obter elementos do DOM
+    // Obter elementos do DOM com os mesmos IDs que estavam no HTML anterior
     this.audio = document.getElementById("bgMusic");
     this.selector = document.getElementById("musicSelector");
     this.toggleButton = document.getElementById("toggleMusic");
@@ -119,33 +131,18 @@ const musicPlayer = {
       return;
     }
 
-    // Caminho do arquivo de áudio
-    const audioPath = this.audioFiles[selectedValue];
-    if (!audioPath) {
-      console.error("Caminho do áudio não encontrado para:", selectedValue);
-      this.showError("Arquivo de áudio não encontrado");
-      return;
-    }
-
-    console.log("Carregando áudio:", audioPath);
+    console.log("Carregando música:", selectedValue);
 
     // Pausar qualquer reprodução atual
     if (!this.audio.paused) {
       this.audio.pause();
     }
 
-    // Configurar o src diretamente - mais confiável que innerHTML para áudio
-    this.audio.src = audioPath;
+    // Definir o source do áudio
+    this.audio.src = this.audioFiles[selectedValue];
 
     // Carregar o áudio
     this.audio.load();
-
-    // Log para verificar o status do áudio
-    console.log("Áudio carregado:", {
-      src: this.audio.src,
-      readyState: this.audio.readyState,
-      networkState: this.audio.networkState,
-    });
 
     // Se o botão estiver no estado "playing", tocar a música automaticamente
     if (this.toggleButton.classList.contains("playing")) {
@@ -159,15 +156,11 @@ const musicPlayer = {
       return;
     }
 
-    console.log("Toggle play/pause");
-
     // Se não houver música selecionada, escolher uma
     if (!this.audio.src && this.selector.value) {
-      console.log("Nenhum src definido, carregando música selecionada");
       this.changeMusic();
       return;
     } else if (!this.audio.src) {
-      console.log("Nenhuma música selecionada");
       this.showError("Selecione uma música primeiro");
       return;
     }
@@ -181,16 +174,8 @@ const musicPlayer = {
   },
 
   play() {
-    console.log("Tentando reproduzir áudio:", this.audio.src);
+    console.log("Tentando reproduzir áudio");
 
-    // Verificar se há um arquivo de áudio para reproduzir
-    if (!this.audio.src) {
-      console.error("Nenhum src definido para reprodução");
-      this.showError("Selecione uma música primeiro");
-      return;
-    }
-
-    // Armazenar a promise retornada por play()
     this.playPromise = this.audio.play();
 
     if (this.playPromise !== undefined) {
@@ -205,17 +190,13 @@ const musicPlayer = {
           this.toggleButton.textContent = "▶️";
           this.toggleButton.classList.remove("playing");
 
-          // Tratar diferentes tipos de erro
-          if (error.name === "NotSupportedError") {
-            this.showError("Formato de áudio não suportado pelo seu navegador");
-          } else if (error.name === "NotAllowedError") {
+          // Mensagem de erro simplificada
+          if (error.name === "NotAllowedError") {
             this.showError(
-              "Reprodução automática bloqueada pelo navegador. Clique novamente."
+              "Clique na tela para permitir a reprodução de áudio"
             );
           } else {
-            this.showError(
-              "Não foi possível reproduzir o áudio. Clique novamente."
-            );
+            this.showError("Não foi possível reproduzir o áudio");
           }
         });
     }
@@ -256,16 +237,10 @@ const musicPlayer = {
     let message = "Erro ao carregar o áudio";
 
     if (error) {
-      // Tratar códigos de erro específicos
+      // Mensagens de erro simplificadas
       switch (error.code) {
-        case MediaError.MEDIA_ERR_ABORTED:
-          message = "A reprodução foi abortada";
-          break;
         case MediaError.MEDIA_ERR_NETWORK:
           message = "Erro de rede ao carregar o áudio";
-          break;
-        case MediaError.MEDIA_ERR_DECODE:
-          message = "Erro ao decodificar o áudio";
           break;
         case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
           message = "Formato de áudio não suportado";
@@ -273,8 +248,9 @@ const musicPlayer = {
       }
     }
 
-    console.error("Erro de áudio:", message, error);
+    console.error("Erro de áudio:", message);
     this.showError(message);
+
     this.toggleButton.textContent = "▶️";
     this.toggleButton.classList.remove("playing");
   },
@@ -282,8 +258,6 @@ const musicPlayer = {
   showError(message) {
     const playerElement = document.querySelector(".music-player");
     if (!playerElement) return;
-
-    console.error("Erro no player:", message);
 
     // Remover mensagens de erro anteriores
     const oldError = playerElement.querySelector(".error-message");
@@ -303,25 +277,59 @@ const musicPlayer = {
     }, CONFIG.ERROR_DISPLAY_TIME);
   },
 
-  // Método para teste manual - verificar se os arquivos existem
+  // Método para verificação básica dos arquivos
   checkAudioFiles() {
     console.log("Verificando arquivos de áudio...");
-
-    Object.entries(this.audioFiles).forEach(([key, path]) => {
+    Object.entries(this.audioFiles).forEach(([name, path]) => {
       fetch(path, { method: "HEAD" })
         .then((response) => {
-          if (!response.ok) {
-            console.error(`Arquivo não encontrado: ${path}`);
-          } else {
-            console.log(`Arquivo OK: ${path}`);
-          }
+          console.log(`${name}: ${response.ok ? "✓" : "✗"}`);
         })
         .catch((error) => {
-          console.error(`Erro ao verificar ${path}:`, error);
+          console.error(`Erro ao verificar ${name}:`, error);
         });
     });
   },
 };
+
+function initFloatingMusicPlayer() {
+  const floatingPlayer = document.querySelector(".floating-music-player");
+  const expandBtn = document.getElementById("expandMusicPlayer");
+  const collapseBtn = document.getElementById("collapseMusicPlayer");
+
+  if (!floatingPlayer || !expandBtn || !collapseBtn) return;
+
+  // Expandir o player
+  expandBtn.addEventListener("click", () => {
+    floatingPlayer.classList.add("expanded");
+  });
+
+  // Recolher o player
+  collapseBtn.addEventListener("click", () => {
+    floatingPlayer.classList.remove("expanded");
+  });
+
+  // Ajustar a posição para evitar sobreposição com o botão de voltar ao topo
+  const backToTopBtn = document.getElementById("backToTopBtn");
+  if (backToTopBtn) {
+    // Posicionamento inicial para evitar sobreposição
+    floatingPlayer.style.bottom = "90px"; // Posiciona o player acima do botão de voltar ao topo
+    floatingPlayer.style.right = "20px";
+
+    // Ajustar posição dinamicamente durante o scroll
+    window.addEventListener("scroll", () => {
+      const isScrolled = window.scrollY > 500;
+
+      if (isScrolled) {
+        // Quando o botão de voltar ao topo estiver visível
+        floatingPlayer.style.bottom = "90px";
+      } else {
+        // Quando o botão de voltar ao topo estiver oculto
+        floatingPlayer.style.bottom = "20px";
+      }
+    });
+  }
+}
 
 //Efeitos de Scroll
 // Função para adicionar efeitos de scroll
