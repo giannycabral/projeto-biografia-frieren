@@ -111,10 +111,32 @@ body {
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: rgba(42, 27, 61, 0.95);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    box-shadow: var(--shadow-sm);
+    background: rgba(42, 27, 61, 0.85);
+    /* Fundo mais transparente */
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 15px rgba(130, 101, 167, 0.3);
+    /* Sombra com cor mágica */
+    border-bottom: 1px solid rgba(169, 142, 218, 0.2);
+    /* Borda sutil brilhante */
+}
+
+/* Adicionar gradiente animado na borda inferior */
+.navbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent,
+            var(--accent-color),
+            var(--secondary-color),
+            var(--accent-color),
+            transparent);
+    background-size: 200% 100%;
+    animation: gradientMove 8s linear infinite;
 }
 
 .nav-content {
@@ -129,33 +151,48 @@ body {
     position: relative;
 }
 
+/* Efeito de brilho mágico ao redor do logo */
 .nav-logo {
+    position: relative;
+    width: 100px;
+    /* Mantendo o tamanho atual */
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 160px;
-    /* Largura aumentada */
-    height: 70px;
-    /* Altura igual à navbar */
-    position: relative;
-    overflow: visible;
-    /* Permite que a imagem ultrapasse o container */
+}
+
+/* Brilho mágico ao redor do logo */
+.nav-logo::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 60px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(169, 142, 218, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.nav-logo:hover::before {
+    opacity: 1;
+    animation: pulseMagic 2s infinite;
 }
 
 .nav-logo-img {
-    max-width: none;
-    height: 90px;
-    /* Tamanho maior para a logo */
-    position: relative;
-    z-index: 1001;
-    /* Garante que fique acima de outros elementos */
+    height: 50px;
+    /* Mantendo o tamanho atual */
+    max-width: 100%;
     object-fit: contain;
-    transform-origin: center left;
-    transition: transform 0.3s ease;
+    transition: filter 0.3s ease, transform 0.3s ease;
+    filter: drop-shadow(0 0 2px rgba(169, 142, 218, 0.3));
 }
 
 .nav-logo-img:hover {
     transform: scale(1.05);
+    filter: drop-shadow(0 0 5px rgba(169, 142, 218, 0.8));
 }
 
 /* Links - Estilo Global */
@@ -183,32 +220,28 @@ a {
     position: relative;
     overflow: hidden;
     display: inline-block;
+    z-index: 1;
 }
 
-/* Efeito de Hover */
+
+/* Efeito de partículas ao passar o mouse */
 .nav-links a::before {
-    content: '';
+    content: '✨';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg,
-            rgba(130, 101, 167, 0.1),
-            rgba(68, 49, 141, 0.2));
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 0.3s ease;
-    border-radius: 8px;
+    top: -20px;
+    left: -20px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
     z-index: -1;
 }
 
 .nav-links a:hover::before {
-    transform: scaleX(1);
-    transform-origin: left;
+    opacity: 1;
+    animation: navSparkle 1.5s infinite linear;
 }
 
-/* Efeito de linha mágica */
+/* Efeito de linha mágica aprimorado */
 .nav-links a::after {
     content: '';
     position: absolute;
@@ -219,23 +252,32 @@ a {
     background: linear-gradient(90deg,
             transparent,
             var(--accent-color),
-            var(--secondary-color),
+            #fff,
+            var(--accent-color),
             transparent);
     transform: translateX(-50%);
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
 
 .nav-links a:hover::after {
-    width: 80%;
+    width: 90%;
 }
 
-/* Efeito de brilho no texto */
+/* Efeito de brilho no texto do link */
 .nav-links a:hover {
-    color: var(--accent-color);
-    text-shadow: 0 0 8px rgba(169, 142, 218, 0.5);
-    transform: translateY(-2px);
+    color: #ffffff;
+    text-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color), 0 0 30px var(--accent-color);
+    transform: translateY(-3px);
 }
 
+/* Efeito de brilho ao redor do link ativo */
+.nav-links a.active {
+    background: rgba(169, 142, 218, 0.15);
+    box-shadow: 0 0 15px rgba(169, 142, 218, 0.3);
+}
+
+/* Efeito hover aprimorado para o botão hamburguer */
 .hamburger {
     display: none;
     background: none;
@@ -244,8 +286,17 @@ a {
     font-size: 1.5rem;
     cursor: pointer;
     padding: 0.5rem;
-    transition: var(--transition-default);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 100;
 }
+
+.hamburger:hover {
+    color: #ffffff;
+    text-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color);
+    transform: rotate(10deg);
+}
+
 
 /* Seção Biografia */
 #biografia {
@@ -1509,209 +1560,33 @@ a {
     box-shadow: var(--shadow-sm);
 }
 
-/* Player de Música Flutuante */
-.floating-music-player {
-    position: fixed;
-    bottom: 90px;
-    /* Posicionamento inicial acima do botão */
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    z-index: 999;
-    /* Z-index menor que o botão de voltar ao topo */
-    /* Restante do CSS permanece igual */
-}
-
-.floating-music-player.expanded {
-    width: 250px;
-    height: auto;
-    border-radius: 15px;
-    padding: 15px;
-}
-
-.music-toggle-view {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-}
-
-.expand-player {
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: transparent;
-    color: var(--text-color);
-    font-size: 1.5rem;
-    cursor: pointer;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.3s ease;
-}
-
-.expand-player:hover {
-    color: var(--accent-color);
-    transform: scale(1.1);
-}
-
-.music-controls {
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-}
-
-.floating-music-player.expanded .music-toggle-view {
-    display: none;
-}
-
-.floating-music-player.expanded .music-controls {
-    display: flex;
-}
-
-.music-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    color: var(--text-color);
-}
-
-.music-header h4 {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.collapse-player {
-    background: transparent;
-    border: none;
-    color: var(--text-color);
-    cursor: pointer;
-    font-size: 0.8rem;
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    transition: all 0.2s ease;
-}
-
-.collapse-player:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--accent-color);
-}
-
-.music-select-wrapper {
-    width: 100%;
-}
-
-#musicSelector {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(169, 142, 218, 0.3);
-    color: var(--text-color);
-    font-size: 0.8rem;
-    cursor: pointer;
-    outline: none;
-}
-
-#musicSelector:focus {
-    border-color: var(--accent-color);
-}
-
-.player-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.music-toggle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background-color: rgba(68, 49, 141, 0.8);
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.music-toggle:hover {
-    background-color: var(--accent-color);
-    transform: scale(1.05);
-}
-
-/* Estilo para o botão de loading */
-.music-toggle.loading {
-    animation: pulse 1.5s infinite;
-}
-
-.volume-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-grow: 1;
-}
-
-.volume-icon {
-    font-size: 0.8rem;
-    color: var(--text-color);
-}
-
-#volumeSlider {
-    flex-grow: 1;
-    height: 4px;
-    accent-color: var(--accent-color);
-    cursor: pointer;
-}
-
-.error-message {
-    color: #ff6b6b;
-    font-size: 0.7rem;
-    text-align: center;
-    margin-top: 5px;
-    background-color: rgba(255, 0, 0, 0.1);
-    padding: 4px;
-    border-radius: 3px;
-}
-
 /* Botão Voltar ao Topo */
 .back-to-top {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    background-color: rgba(68, 49, 141, 0.9);
+    background-color: var(--secondary-color);
     color: white;
+    border: none;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
     opacity: 0;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    visibility: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
     z-index: 1000;
-    /* Z-index maior que o player */
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     transform: translateY(20px);
 }
 
 .back-to-top.visible {
     opacity: 1;
-    visibility: visibleY(0);
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .back-to-top:hover {
@@ -1720,91 +1595,220 @@ a {
     box-shadow: 0 6px 20px rgba(169, 142, 218, 0.6);
 }
 
+/*player*/
+
+/* Player de Música Flutuante */
+.floating-player {
+    position: fixed;
+    right: 20px;
+    bottom: 80px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-player:hover {
+    transform: scale(1.05);
+}
+
+.floating-player.expanded {
+    width: 180px;
+    height: 55px;
+    border-radius: 30px;
+    padding: 0 10px;
+    justify-content: flex-start;
+}
+
+.player-toggle {
+    background: none;
+    border: none;
+    color: var(--text-color, white);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    padding: 0;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.player-toggle:hover {
+    transform: scale(1.1);
+}
+
+.player-toggle.playing {
+    animation: pulse 1.5s infinite;
+}
+
+.player-icon {
+    display: inline-block;
+    font-size: 20px;
+    color: var(--text-color, white);
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+.volume-icon {
+    display: inline-block;
+    font-size: 16px;
+    color: var(--text-color, white);
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+.player-icon,
+.volume-icon {
+    font-family: Arial, "Segoe UI Symbol", sans-serif;
+}
+
+.player-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-left: 5px;
+    width: 115px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.floating-player.expanded .player-controls {
+    opacity: 1;
+    visibility: visible;
+}
+
+.player-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.player-progress-bar {
+    height: 100%;
+    width: 0;
+    background: var(--text-color);
+    transition: width 0.1s linear;
+}
+
+.player-volume {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-toggle {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+}
+
+.volume-slider {
+    width: 70px;
+    height: 3px;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    border-radius: 2px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: var(--text-color);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    background: var(--text-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Estilos para notificação de autoplay */
+.autoplay-notification {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 0 5px;
+}
+
+.notification-close:hover {
+    opacity: 0.7;
+}
+
+/* Indicador visual para player com áudio mudo */
+.floating-player.muted-playing {
+    animation: mutedPulse 2s infinite;
+}
+
 /* Footer */
 footer {
-    background: linear-gradient(to bottom,
-            rgba(42, 27, 61, 0.95) 0%,
-            rgba(68, 49, 141, 0.98) 100%);
-    padding: 4rem 2rem 2rem;
-    color: var(--text-color);
+    background: linear-gradient(to bottom, rgba(42, 27, 61, 0.8), rgba(42, 27, 61, 0.95));
+    color: #fff;
     position: relative;
+    padding: 3rem 0 1rem;
+    margin-top: 4rem;
     overflow: hidden;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(169, 142, 218, 0.2);
-}
-
-/* Partículas decorativas */
-footer::before,
-footer::after {
-    content: '✨';
-    position: absolute;
-    font-size: 1.5rem;
-    opacity: 0.1;
-    animation: footerSparkle 10s linear infinite;
-}
-
-footer::before {
-    top: 20%;
-    left: 10%;
-}
-
-footer::after {
-    bottom: 30%;
-    right: 15%;
-    animation-delay: 5s;
 }
 
 .footer-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 3rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 2rem;
     position: relative;
     z-index: 2;
 }
 
-/* Links do Footer */
-.footer-section a {
-    color: var(--text-color);
-    transition: all 0.3s ease;
-    position: relative;
-    padding: 0.2rem 0;
-}
-
-.footer-section a::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: var(--accent-color);
-    transition: width 0.3s ease;
-}
-
-.footer-section a:hover::after {
-    width: 100%;
-}
-
-.footer-section a:hover {
-    color: var(--accent-color);
-}
-
-
-.footer-section:hover {
-    transform: translateY(-5px);
-    border-color: rgba(169, 142, 218, 0.3);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+.footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 250px;
 }
 
 .footer-section h3 {
-    color: var(--accent-color);
-    margin-bottom: 1.5rem;
-    font-size: 1.4rem;
     position: relative;
-    padding-bottom: 0.8rem;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+    padding-bottom: 0.5rem;
 }
 
 .footer-section h3::after {
@@ -1813,110 +1817,149 @@ footer::after {
     bottom: 0;
     left: 0;
     width: 50px;
-    height: 2px;
-    background: linear-gradient(90deg,
-            var(--accent-color),
-            transparent);
+    height: 3px;
+    background: var(--accent-color);
+    border-radius: 2px;
 }
 
-.footer-bottom {
-    text-align: center;
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(169, 142, 218, 0.1);
-    position: relative;
+.footer-section.about p {
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
 }
 
-.footer-bottom::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-    height: 1px;
-    background: linear-gradient(90deg,
-            transparent,
-            var(--accent-color),
-            transparent);
-}
-
-/* Estilo para a imagem no footer */
-.footer-image {
-    margin-top: 2rem;
-    text-align: center;
-}
-
-.footer-image .magic-symbol {
-    max-width: 300px;
-    opacity: 0.85;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 0 8px var(--accent-color));
-}
-
-.footer-image .magic-symbol:hover {
-    opacity: 1;
-    transform: rotate(20deg) scale(1.1);
-    filter: drop-shadow(0 0 15px var(--accent-color));
-}
-
-/*Creditos*/
-.credits-list {
+.footer-section.links ul {
     list-style: none;
     padding: 0;
 }
 
-.credits-list li {
-    margin-bottom: 1.8rem;
-    padding: 1rem;
-    background: rgba(68, 49, 141, 0.1);
-    border-radius: 8px;
-    transition: all 0.3s ease;
+.footer-section.links li {
+    margin-bottom: 0.8rem;
+    transition: transform 0.3s ease;
 }
 
-.credits-list li:hover {
-    background: rgba(68, 49, 141, 0.2);
+.footer-section.links li:hover {
     transform: translateX(5px);
 }
 
-.credits-list h4 {
-    color: var(--secondary-color);
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
+.footer-section.links a {
+    color: #e0d5f5;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    padding-left: 1.2rem;
 }
 
-.credits-list p {
-    font-size: 0.95rem;
-    opacity: 0.9;
-    margin-bottom: 0.3rem;
+.footer-section.links a::before {
+    content: '✨';
+    position: absolute;
+    left: 0;
+    font-size: 0.8rem;
 }
 
-.credits-list small {
-    display: block;
-    color: var(--accent-color);
-    font-size: 0.85rem;
-    opacity: 0.8;
+.footer-section.links a:hover {
+    color: #fff;
 }
 
-
-/*Redes Sociais*/
 .social-links {
     display: flex;
     gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .social-links a {
-    color: var(--text-color);
-    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
     transition: all 0.3s ease;
-    position: relative;
-    display: inline-block;
 }
 
 .social-links a:hover {
-    color: var(--accent-color);
+    background: var(--accent-color);
     transform: translateY(-3px);
-    text-shadow: 0 5px 15px rgba(169, 142, 218, 0.4);
+    box-shadow: 0 5px 15px rgba(169, 142, 218, 0.4);
+}
+
+.footer-image {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.footer-image img {
+    max-width: 180px;
+    /* Aumentado de 120px para 180px */
+    opacity: 0.9;
+    /* Aumentado de 0.8 para 0.9 para maior visibilidade */
+    transition: all 0.4s ease;
+    filter: drop-shadow(0 0 8px rgba(169, 142, 218, 0.8));
+    /* Sombra mais pronunciada */
+}
+
+.footer-image img:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    /* Efeito de ampliação maior no hover */
+    filter: drop-shadow(0 0 12px rgba(169, 142, 218, 1));
+    /* Brilho mais intenso */
+}
+
+.footer-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.magic-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(169, 142, 218, 0.1) 1px, transparent 2px),
+        radial-gradient(circle at 30% 70%, rgba(169, 142, 218, 0.1) 1px, transparent 2px),
+        radial-gradient(circle at 60% 30%, rgba(169, 142, 218, 0.1) 2px, transparent 3px),
+        radial-gradient(circle at 80% 60%, rgba(169, 142, 218, 0.1) 1px, transparent 2px);
+    background-size: 300px 300px;
+    animation: floatingParticles 20s linear infinite;
+}
+
+.magic-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(169, 142, 218, 0.05) 0%, transparent 60%);
+    animation: rotateGlow 30s linear infinite;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 2;
+}
+
+.footer-bottom p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.heart-icon {
+    display: inline-block;
+    animation: heartbeat 1.5s infinite;
 }
 
 
@@ -1939,13 +1982,43 @@ footer::after {
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(20px);
     }
 
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+@keyframes mutedPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(130, 101, 167, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(130, 101, 167, 0);
+    }
+}
+
+/* Animação para o prompt de reprodução */
+@keyframes promptPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px var(--accent-color);
+    }
+}
+
+.prompt-to-play {
+    animation: promptPulse 1.5s infinite;
 }
 
 @keyframes gradientBorder {
@@ -1959,6 +2032,16 @@ footer::after {
 
     100% {
         background-position: 0% 50%;
+    }
+}
+
+@keyframes gradientMove {
+    0% {
+        background-position: 0% 0%;
+    }
+
+    100% {
+        background-position: 200% 0%;
     }
 }
 
@@ -2035,18 +2118,32 @@ footer::after {
     }
 }
 
-/* Animações adicionais */
+/* Pulsar quando estiver tocando */
 @keyframes pulse {
     0% {
-        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(169, 142, 218, 0.4);
     }
 
-    50% {
-        transform: scale(1.1);
+    70% {
+        box-shadow: 0 0 0 10px rgba(169, 142, 218, 0);
     }
 
     100% {
-        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(169, 142, 218, 0);
+    }
+}
+
+@keyframes pulseMagic {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.2;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.5;
     }
 }
 
@@ -2138,6 +2235,22 @@ footer::after {
     }
 }
 
+@keyframes navSparkle {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(50px, 50px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
 /* Animação para as estrelas caracteristicas*/
 @keyframes sparkleFloat {
 
@@ -2165,6 +2278,28 @@ footer::after {
     50% {
         transform: scale(1.2) rotate(180deg);
         opacity: 1;
+    }
+}
+
+@keyframes heartbeat {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+@keyframes rotateGlow {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }
 
@@ -2207,22 +2342,16 @@ footer::after {
     }
 }
 
-@keyframes floatParticle {
+@keyframes floatingParticles {
     0% {
-        transform: translateY(0) translateX(0) scale(1);
-        opacity: 0;
-    }
-
-    50% {
-        opacity: 0.8;
-        transform: translateY(-100px) translateX(100px) scale(1.5);
+        background-position: 0 0;
     }
 
     100% {
-        transform: translateY(-200px) translateX(200px) scale(1);
-        opacity: 0;
+        background-position: 300px 300px;
     }
 }
+
 
 .spell-icon {
     transition: all 0.3s ease;
@@ -2313,12 +2442,6 @@ footer::after {
 
 /* Media Queries Unificadas */
 
-/* Media Queries para o Music Player */
-@media screen and (max-width: 1024px) {
-    .music-player {
-        width: 280px;
-    }
-}
 
 @media screen and (max-width: 1200px) {
     .bio-container {
@@ -2364,7 +2487,6 @@ footer::after {
 
     .hamburger {
         display: block;
-        z-index: 100;
     }
 
     .nav-links {
@@ -2373,13 +2495,16 @@ footer::after {
         right: -100%;
         width: 70%;
         height: calc(100vh - 70px);
-        background: rgba(42, 27, 61, 0.98);
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
+        background: rgba(42, 27, 61, 0.95);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
         flex-direction: column;
         padding: 2rem;
-        transition: right 0.3s ease;
+        transition: right 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        border-left: 1px solid rgba(169, 142, 218, 0.2);
+        box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
     }
+
 
     .nav-links.show {
         right: 0;
@@ -2397,12 +2522,31 @@ footer::after {
     .nav-links li {
         opacity: 0;
         transform: translateX(50px);
-        transition: 0.3s ease-in-out;
+        transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .nav-links.show li {
         opacity: 1;
         transform: translateX(0);
+    }
+
+    /* Adicionando partículas mágicas ao menu mobile */
+    .nav-links::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            radial-gradient(circle at 10% 20%, rgba(169, 142, 218, 0.1) 1px, transparent 2px),
+            radial-gradient(circle at 30% 70%, rgba(169, 142, 218, 0.1) 1px, transparent 2px),
+            radial-gradient(circle at 60% 30%, rgba(169, 142, 218, 0.1) 2px, transparent 3px),
+            radial-gradient(circle at 80% 60%, rgba(169, 142, 218, 0.1) 1px, transparent 2px);
+        background-size: 300px 300px;
+        animation: floatingParticles 20s linear infinite;
+        opacity: 0.5;
+        pointer-events: none;
     }
 
     .bio-small-images {
@@ -2520,41 +2664,6 @@ footer::after {
     .video-item h3 {
         font-size: 1.1rem;
         padding: 0.8rem;
-    }
-
-    .music-player {
-        bottom: 10px;
-        right: 10px;
-        width: 220px;
-        padding: 0.6rem;
-        max-height: 200px;
-    }
-
-    .music-controls {
-        gap: 0.4rem;
-    }
-
-    #musicSelector {
-        font-size: 0.8rem;
-        padding: 4px;
-    }
-
-    .floating-music-player {
-        bottom: 80px;
-        /* Ajuste para telas menores */
-        right: 15px;
-        width: 50px;
-        height: 50px;
-    }
-
-    .floating-music-player.expanded {
-        width: 220px;
-    }
-
-    .music-toggle {
-        width: 32px;
-        height: 32px;
-        font-size: 0.9rem;
     }
 
     #caracteristicas {
@@ -2687,7 +2796,7 @@ footer::after {
     }
 
     .footer-section {
-        padding: 1rem;
+        margin: 0 0 2rem;
     }
 
     .footer-section h3 {
@@ -2695,38 +2804,45 @@ footer::after {
     }
 
     .footer-image .magic-symbol {
-        max-width: 250px;
+        max-width: 150px;
     }
 
     .footer-content {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+        flex-direction: column;
     }
 
-    .credits-list li {
-        padding: 0.8rem;
-    }
 
     .social-links {
         justify-content: center;
     }
+
+    .footer-image {
+        text-align: center;
+    }
+
+    .floating-player {
+        right: 15px;
+        bottom: 70px;
+        width: 36px;
+        height: 36px;
+    }
+
+    .floating-player.expanded {
+        width: 160px;
+        height: 48px;
+    }
+
+    .player-toggle {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .volume-slider {
+        width: 60px;
+    }
 }
 
-@media (max-width: 600px) {
-    .music-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    #musicSelector {
-        max-width: 100%;
-    }
-
-    .volume-control {
-        width: 100%;
-        justify-content: center;
-    }
-}
 
 @media screen and (max-width: 480px) {
     .nav-content {
@@ -2735,12 +2851,12 @@ footer::after {
     }
 
     .nav-logo {
-        width: 110px;
+        width: 90px;
 
     }
 
     .nav-logo-img {
-        height: 60px;
+        height: px;
     }
 
     .nav-links a {
@@ -2924,108 +3040,48 @@ footer::after {
     }
 
     .footer-image .magic-symbol {
-        max-width: 200px;
+        max-width: 130px;
     }
 
     .credits-list h4 {
         font-size: 1rem;
     }
 
-    .music-player {
-        bottom: 65px;
-        /* Posiciona acima do footer */
-        right: 5px;
-        width: 180px;
-        padding: 0.4rem;
-        border-radius: 8px;
-    }
-
-    .music-controls label {
-        font-size: 0.8rem;
-        margin-bottom: 0;
-    }
-
-    .music-controls {
-        gap: 0.5rem;
-    }
-
-    #volumeSlider {
-        height: 3px;
-        margin: 0.2rem 0;
-    }
-
-    #musicSelector,
-    .volume-icon {
-        font-size: 0.75rem;
-    }
-
-    .music-toggle {
-        padding: 0.2rem 0.5rem;
-        font-size: 0.85rem;
-    }
-
-    .floating-music-player {
-        bottom: 75px;
-        /* Ajuste para telas muito pequenas */
+    .floating-player {
         right: 10px;
-        width: 45px;
+        bottom: 60px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .floating-player.expanded {
+        width: 140px;
         height: 45px;
     }
 
-
-    .floating-music-player.expanded {
-        width: 180px;
-        bottom: 10px;
-        right: 10px;
+    .player-toggle {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
     }
 
-    .music-header h4 {
-        font-size: 0.8rem;
+    .volume-slider {
+        width: 50px;
     }
+
+
 }
 
 /* Ajuste para quando o player está no modo landscape em dispositivos móveis */
 @media screen and (max-height: 480px) and (orientation: landscape) {
-    .music-player {
-        bottom: 5px;
-        right: 5px;
-        width: 180px;
-    }
-
-    .music-controls {
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.3rem;
-    }
-
-    .music-controls label {
-        display: none;
-    }
-
-    #volumeSlider {
-        width: 60px;
-    }
 
     .back-to-top {
         bottom: 70px;
         right: 5px;
     }
-}
 
-@media screen and (max-width: 360px) {
-    .music-player {
-        padding: 0.6rem;
-    }
-
-    .music-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    #musicSelector,
-    .music-toggle,
-    #volumeSlider {
-        width: 100%;
+    .floating-player {
+        bottom: 50px;
+        right: 5px;
     }
 }

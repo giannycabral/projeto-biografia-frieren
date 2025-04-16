@@ -414,28 +414,41 @@
         </section>
     </main>
 
-    <!-- Footer -->
+    <!-- Player de música flutuante -->
+    <div class="floating-player" id="musicPlayer">
+        <button class="player-toggle" id="playerToggle" aria-label="Tocar música tema">
+            <i class="player-icon">♫</i>
+        </button>
+
+        <div class="player-controls">
+            <div class="player-progress">
+                <div class="player-progress-bar" id="progressBar"></div>
+            </div>
+            <div class="player-volume">
+                <button class="volume-toggle" id="volumeToggle" aria-label="Ativar/desativar som">
+                    <i class="volume-icon">🔊</i>
+                </button>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70"
+                    aria-label="Controle de volume">
+            </div>
+        </div>
+
+        <audio id="themeAudio" preload="auto" loop muted>
+            <source src="audio/theme-principal.mp3" type="audio/mpeg">
+            <source src="audio/theme-principal.ogg" type="audio/ogg">
+            <source src="audio/theme-principal.wav" type="audio/wav">
+            Seu navegador não suporta áudio HTML5.
+        </audio>
+    </div>
+
+    <!-- Footer redesenhado -->
     <footer>
         <div class="footer-content">
-            <div class="footer-section credits">
-                <h3>Créditos Musicais</h3>
-                <ul class="credits-list">
-                    <li>
-                        <h4>"Summer Crush"</h4>
-                        <p>Música por HoliznaPATREON</p>
-                        <small>Licença: Copyright Free</small>
-                    </li>
-                    <li>
-                        <h4>"Yuusha"</h4>
-                        <p>YOASOBI (Versão Instrumental)</p>
-                        <small>Opening do anime Sousou no Frieren</small>
-                    </li>
-                    <li>
-                        <h4>"Slay That Dragon"</h4>
-                        <p>por Tentavox</p>
-                        <small>Licença: Copyright Free</small>
-                    </li>
-                </ul>
+            <div class="footer-section about">
+                <h3>Sobre Frieren</h3>
+                <p>Uma jornada pela história da maga élfica que viaja além do fim, descobrindo o verdadeiro valor do
+                    tempo e das conexões humanas.</p>
+                <div class="footer-divider"></div>
             </div>
 
             <div class="footer-section links">
@@ -467,14 +480,22 @@
                         <i class="fab fa-linkedin fa-lg"></i>
                     </a>
                 </div>
-                <!-- Nova seção de imagem -->
+                <!-- Imagem do logotipo -->
                 <div class="footer-image">
                     <img src="./images/logotipo.png" alt="Símbolo mágico de Frieren" class="magic-symbol">
                 </div>
             </div>
         </div>
+
+        <!-- Elementos decorativos -->
+        <div class="footer-decoration">
+            <div class="magic-particles"></div>
+            <div class="magic-glow"></div>
+        </div>
+
         <div class="footer-bottom">
-            <p>Projeto Biográfico Frieren - 2025 | Desenvolvido por <strong>Regiane Cabral</strong> com 💜</p>
+            <p>Projeto Biográfico Frieren - 2025 | Desenvolvido por <strong>Regiane Cabral</strong> com <span
+                    class="heart-icon">💜</span></p>
         </div>
     </footer>
 
@@ -483,48 +504,6 @@
         <i class="fas fa-chevron-up"></i>
     </button>
 
-    <!-- Player de música fixo -->
-    <div class="floating-music-player" aria-label="Controles de música">
-        <div class="music-toggle-view">
-            <button id="expandMusicPlayer" class="expand-player" aria-label="Expandir player de música">
-                <i class="fas fa-music"></i>
-            </button>
-        </div>
-        <div class="music-controls">
-            <div class="music-header">
-                <h4>Música</h4>
-                <button id="collapseMusicPlayer" class="collapse-player" aria-label="Recolher player">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-            </div>
-            <div class="music-select-wrapper">
-                <select id="musicSelector" name="musicSelector" aria-label="Selecione uma música">
-                    <option value="">Escolha uma música</option>
-                    <option value="summer-crush">Summer Crush</option>
-                    <option value="theme-principal">Tema Principal</option>
-                    <option value="battle-theme">Tema de Batalha</option>
-                </select>
-            </div>
-            <div class="player-actions">
-                <button id="toggleMusic" name="toggleMusic" type="button" class="music-toggle"
-                    aria-label="Tocar/Pausar música">▶️</button>
-                <div class="volume-control">
-                    <label for="volumeSlider" class="volume-icon">🔊</label>
-                    <input type="range" id="volumeSlider" name="volumeSlider" min="0" max="100" value="50"
-                        aria-label="Controle de volume" title="Volume">
-                </div>
-            </div>
-        </div>
-
-        <audio id="bgMusic" preload="metadata">
-            <!-- Os sources serão adicionados dinamicamente via JavaScript -->
-            Seu navegador não suporta o elemento de áudio HTML5.
-        </audio>
-
-    </div>
-
-    <!-- Biblioteca de áudio Howler.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 </body>
 
 </html>
