@@ -531,6 +531,21 @@ const themePlayer = {
       this.playerIcon.style.textShadow = "0 0 5px rgba(255, 255, 255, 0.7)";
     }
 
+    // Configurar o ícone do player
+    const playerToggle = document.getElementById("playerToggle");
+    const playerIcon = playerToggle.querySelector("i");
+
+    playerToggle.addEventListener("click", () => {
+      if (playerToggle.classList.contains("playing")) {
+        playerIcon.classList.remove("fa-pause");
+        playerIcon.classList.add("fa-play");
+      } else {
+        playerIcon.classList.remove("fa-play");
+        playerIcon.classList.add("fa-pause");
+      }
+      playerToggle.classList.toggle("playing");
+    });
+
     // Adicionar um rótulo de "Música" ao botão para indicar sua função
     const label = document.createElement("div");
     label.className = "player-label";
@@ -549,6 +564,9 @@ const themePlayer = {
     label.style.whiteSpace = "nowrap";
 
     this.player.appendChild(label);
+
+    // Destacar visualmente o botão de play
+    this.toggleBtn.classList.add("attention-pulse");
 
     // Criar um efeito visual para chamar atenção para o botão de play
     const style = document.createElement("style");
