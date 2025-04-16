@@ -315,14 +315,16 @@ function initFloatingMusicPlayer() {
 // Inicializa o player de música
 const themePlayer = {
   init: function () {
+    // Verificar elementos
     this.player = document.getElementById("musicPlayer");
     this.audio = document.getElementById("themeAudio");
     this.toggleBtn = document.getElementById("playerToggle");
     this.progressBar = document.getElementById("progressBar");
     this.volumeSlider = document.getElementById("volumeSlider");
     this.volumeToggle = document.getElementById("volumeToggle");
+    this.volumeIcon = this.volumeToggle.querySelector(".volume-icon");
+    this.playerIcon = this.toggleBtn.querySelector(".player-icon");
 
-    // Verificar se elementos existem
     if (
       !this.player ||
       !this.audio ||
@@ -335,27 +337,6 @@ const themePlayer = {
       return;
     }
 
-    // Obter elementos de ícone
-    this.volumeIcon = this.volumeToggle.querySelector(".volume-icon");
-    this.playerIcon = this.toggleBtn.querySelector(".player-icon");
-
-    // Verificar se os ícones foram encontrados
-    if (!this.volumeIcon) {
-      console.warn("Ícone de volume não encontrado, criando elemento");
-      this.volumeIcon = document.createElement("i");
-      this.volumeIcon.className = "volume-icon";
-      this.volumeIcon.textContent = "🔊";
-      this.volumeToggle.appendChild(this.volumeIcon);
-    }
-
-    if (!this.playerIcon) {
-      console.warn("Ícone do player não encontrado, criando elemento");
-      this.playerIcon = document.createElement("i");
-      this.playerIcon.className = "player-icon";
-      this.playerIcon.textContent = "♫";
-      this.toggleBtn.appendChild(this.playerIcon);
-    }
-
     this.isExpanded = false;
     this.isMuted = false;
     this.setupEventListeners();
@@ -363,6 +344,98 @@ const themePlayer = {
 
     // Tentar iniciar a reprodução automática
     this.attemptAutoplay();
+  },
+
+  // Adicione esta função que estava faltando
+  attemptAutoplay: function () {
+    console.log("Tentando reprodução automática...");
+
+    // Destacar visualmente o botão de play
+    this.toggleBtn.classList.add("attention-pulse");
+
+    // Criar um efeito visual para chamar atenção para o botão de play
+    const style = document.createElement("style");
+    style.innerHTML = `
+      @keyframes attentionPulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(169, 142, 218, 0.7);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 0 0 10px rgba(169, 142, 218, 0);
+        }
+      }
+      
+      .attention-pulse {
+        animation: attentionPulse 1.5s infinite;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Mostrar uma dica visual próxima ao player
+    const hint = document.createElement("div");
+    hint.className = "player-hint";
+    hint.textContent = "Clique para ouvir a música";
+    hint.style.position = "absolute";
+    hint.style.bottom = "100%";
+    hint.style.left = "50%";
+    hint.style.transform = "translateX(-50%)";
+    hint.style.backgroundColor = "rgba(42, 27, 61, 0.9)";
+    hint.style.color = "#fff";
+    hint.style.padding = "8px 12px";
+    hint.style.borderRadius = "8px";
+    hint.style.fontSize = "14px";
+    hint.style.whiteSpace = "nowrap";
+    hint.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
+    hint.style.zIndex = "1000";
+    hint.style.opacity = "0";
+    hint.style.transition = "opacity 0.3s ease";
+
+    this.player.appendChild(hint);
+
+    // Mostrar a dica ao passar o mouse
+    this.toggleBtn.addEventListener("mouseenter", () => {
+      hint.style.opacity = "1";
+    });
+
+    this.toggleBtn.addEventListener("mouseleave", () => {
+      hint.style.opacity = "0";
+    });
+
+    // Tentar reprodução com áudio mudo (maior chance de ser permitido)
+    try {
+      this.audio.muted = true;
+      const playPromise = this.audio.play();
+
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("Reprodução automática iniciada (mudo)");
+            this.toggleBtn.classList.add("playing");
+            this.playerIcon.textContent = "🔇";
+            this.expand();
+            this.player.classList.add("muted-playing");
+          })
+          .catch((error) => {
+            console.error("Reprodução automática falhou:", error);
+            this.audio.muted = false;
+          });
+      }
+    } catch (error) {
+      console.error("Erro ao tentar autoplay:", error);
+    }
+
+    // Adicionar evento para remover a animação após a interação
+    document.addEventListener(
+      "click",
+      () => {
+        this.toggleBtn.classList.remove("attention-pulse");
+        const hint = this.player.querySelector(".player-hint");
+        if (hint) hint.remove();
+      },
+      { once: true }
+    );
   },
 
   setupEventListeners: function () {
@@ -444,41 +517,162 @@ const themePlayer = {
   },
 
   attemptAutoplay: function () {
-    this.hasAutoplayAttempted = true;
     console.log("Tentando reprodução automática...");
 
-    // Definir o áudio como mudo inicialmente (maior probabilidade de sucesso)
-    this.audio.muted = true;
+    // Destacar visualmente o botão de play com um ícone de música mais evidente
+    this.toggleBtn.classList.add("attention-pulse");
 
-    // Tentar reproduzir
-    const playPromise = this.audio.play();
-
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          // Autoplay bem-sucedido com áudio mudo
-          console.log("Reprodução automática iniciada (mudo)");
-          this.toggleBtn.classList.add("playing");
-          this.playerIcon.textContent = "🔇";
-          this.expand();
-
-          // Ativar animação pulsante no player para indicar reprodução com mudo
-          this.player.classList.add("muted-playing");
-
-          // Exibir dica visual para o usuário
-          this.showAutoplayNotification();
-        })
-        .catch((error) => {
-          console.error("Reprodução automática falhou:", error);
-
-          // Reset do estado
-          this.audio.muted = false;
-          this.playerIcon.textContent = "♫";
-
-          // Segunda tentativa: mostrar ao usuário que ele precisa clicar
-          this.showPlayPrompt();
-        });
+    // Adicionar um ícone de nota musical mais visível que indica claramente que é um player
+    if (this.playerIcon) {
+      // Garantir que o ícone tenha um tamanho adequado e seja visível
+      this.playerIcon.textContent = "♫";
+      this.playerIcon.style.fontSize = "24px";
+      this.playerIcon.style.color = "white";
+      this.playerIcon.style.textShadow = "0 0 5px rgba(255, 255, 255, 0.7)";
     }
+
+    // Adicionar um rótulo de "Música" ao botão para indicar sua função
+    const label = document.createElement("div");
+    label.className = "player-label";
+    label.textContent = "Música";
+    label.style.position = "absolute";
+    label.style.bottom = "-20px";
+    label.style.left = "50%";
+    label.style.transform = "translateX(-50%)";
+    label.style.color = "white";
+    label.style.fontSize = "12px";
+    label.style.fontWeight = "bold";
+    label.style.textShadow = "0 0 4px rgba(0, 0, 0, 0.5)";
+    label.style.backgroundColor = "rgba(42, 27, 61, 0.7)";
+    label.style.padding = "2px 8px";
+    label.style.borderRadius = "10px";
+    label.style.whiteSpace = "nowrap";
+
+    this.player.appendChild(label);
+
+    // Criar um efeito visual para chamar atenção para o botão de play
+    const style = document.createElement("style");
+    style.innerHTML = `
+      @keyframes attentionPulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(169, 142, 218, 0.7);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 0 0 10px rgba(169, 142, 218, 0);
+        }
+      }
+      
+      .attention-pulse {
+        animation: attentionPulse 1.5s infinite;
+      }
+      
+      /* Adicionar animação para o ícone musical */
+      @keyframes musicNoteWiggle {
+        0%, 100% { transform: rotate(-5deg); }
+        50% { transform: rotate(5deg); }
+      }
+      
+      .player-icon {
+        animation: musicNoteWiggle 2s ease-in-out infinite;
+        display: inline-block;
+      }
+      
+      /* Ícones de onda sonora ao redor do botão */
+      .player-toggle::before,
+      .player-toggle::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        z-index: -1;
+        opacity: 0;
+        animation: soundWave 2s infinite;
+      }
+      
+      .player-toggle::before {
+        width: 100%;
+        height: 100%;
+        animation-delay: 0s;
+      }
+      
+      .player-toggle::after {
+        width: 120%;
+        height: 120%;
+        animation-delay: 0.5s;
+      }
+      
+      @keyframes soundWave {
+        0% { transform: scale(1); opacity: 0.3; }
+        100% { transform: scale(1.5); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Mostrar uma dica visual próxima ao player
+    const hint = document.createElement("div");
+    hint.className = "player-hint";
+    hint.textContent = "Clique para ouvir a música";
+    hint.style.position = "absolute";
+    hint.style.bottom = "100%";
+    hint.style.left = "50%";
+    hint.style.transform = "translateX(-50%)";
+    hint.style.backgroundColor = "rgba(42, 27, 61, 0.9)";
+    hint.style.color = "#fff";
+    hint.style.padding = "8px 12px";
+    hint.style.borderRadius = "8px";
+    hint.style.fontSize = "14px";
+    hint.style.whiteSpace = "nowrap";
+    hint.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
+    hint.style.zIndex = "1000";
+    hint.style.opacity = "0";
+    hint.style.transition = "opacity 0.3s ease";
+
+    this.player.appendChild(hint);
+
+    // Mostrar a dica ao passar o mouse
+    this.toggleBtn.addEventListener("mouseenter", () => {
+      hint.style.opacity = "1";
+    });
+
+    this.toggleBtn.addEventListener("mouseleave", () => {
+      hint.style.opacity = "0";
+    });
+
+    // Tentar reprodução com áudio mudo (maior chance de ser permitido)
+    try {
+      this.audio.muted = true;
+      const playPromise = this.audio.play();
+
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("Reprodução automática iniciada (mudo)");
+            this.toggleBtn.classList.add("playing");
+            this.playerIcon.textContent = "🔇";
+            this.expand();
+            this.player.classList.add("muted-playing");
+          })
+          .catch((error) => {
+            console.error("Reprodução automática falhou:", error);
+            this.audio.muted = false;
+          });
+      }
+    } catch (error) {
+      console.error("Erro ao tentar autoplay:", error);
+    }
+
+    // Adicionar evento para remover alguns elementos após a interação
+    document.addEventListener(
+      "click",
+      () => {
+        // Manter o rótulo "Música" visível, mas remover outros elementos temporários
+        const hint = this.player.querySelector(".player-hint");
+        if (hint) hint.remove();
+      },
+      { once: true }
+    );
   },
 
   showAutoplayNotification: function () {
