@@ -105,131 +105,102 @@ function initializeScrollEffects() {
 
 // Gerenciamento de Galeria
 const galleryManager = {
-  init() {
-    this.createGallery();
-    this.setupBioImageGallery();
+  currentImageIndex: 0,
+  images: [],
+
+  showModal: function (image) {
+    try {
+      const modal = document.querySelector("#imageModal");
+      const modalImage = document.querySelector("#modalImage");
+
+      if (!modal || !modalImage || !image) {
+        console.error("Elementos necessários não encontrados");
+        return;
+      }
+
+      // Garantir que temos um src válido
+      if (!image.src) {
+        console.error("Imagem sem fonte válida");
+        return;
+      }
+
+      modal.style.display = "flex";
+      modalImage.src = image.src;
+      modalImage.alt = image.alt || "Imagem da galeria";
+
+      // Atualiza o índice atual
+      this.currentImageIndex = Array.from(this.images).indexOf(image);
+      this.updateNavigationButtons();
+    } catch (error) {
+      console.error("Erro ao abrir modal:", error);
+    }
   },
 
-  createGallery() {
-    const galleryItems = [
-      {
-        img: "./images/frieren-1.jpeg",
-        caption: "Frieren",
-      },
-      {
-        img: "./images/frieren-2.jpeg",
-        caption: "Momento de Reflexão",
-      },
-      {
-        img: "./images/frieren-3.jpeg",
-        caption: "Frieren olhando para o horizonte",
-      },
-      {
-        img: "./images/frieren-4.jpeg",
-        caption: "Frieren",
-      },
-      { img: "./images/frieren-5.jpeg", caption: "Frieren comendo um lanche" },
-      {
-        img: "./images/frieren-6.jpg",
-        caption: "Frieren Pesquisando sobre o passado",
-      },
-      {
-        img: "./images/frieren-7.jpeg",
-        caption: "Frieren olhando para o céu",
-      },
-      { img: "./images/frieren-8.jpeg", caption: "Frieren com seu grimoório" },
-    ];
+  updateNavigationButtons: function () {
+    const prevButton = document.querySelector(".prev-button");
+    const nextButton = document.querySelector(".next-button");
 
-    const galleryGrid = document.querySelector(".gallery-grid");
-    if (!galleryGrid) return;
-
-    this.renderGalleryItems(galleryGrid, galleryItems);
-    this.setupModal(galleryItems);
+    if (prevButton) {
+      prevButton.disabled = this.currentImageIndex === 0;
+    }
+    if (nextButton) {
+      nextButton.disabled = this.currentImageIndex === this.images.length - 1;
+    }
   },
-  // Adiciona a galeria de imagens da biografia
-  setupBioImageGallery() {
-    const mainImage = document.querySelector(".bio-image .main-image");
-    const thumbnails = document.querySelectorAll(".bio-small-images img");
 
-    if (!mainImage || thumbnails.length === 0) return;
+  init: function () {
+    try {
+      // Coleta todas as imagens da galeria
+      this.images = document.querySelectorAll(".gallery-item img");
 
-    thumbnails[0].classList.add("active-thumb");
-    this.setupThumbnailEvents(mainImage, thumbnails);
-  },
-  // Adiciona os itens da galeria
-  renderGalleryItems(grid, items) {
-    items.forEach((item, index) => {
-      const galleryItem = document.createElement("div");
-      galleryItem.className = "gallery-item";
-      galleryItem.innerHTML = `
-        <img src="${item.img}" alt="${item.caption}" loading="lazy">
-        <div class="caption"><h3>${item.caption}</h3></div>
-      `;
+      if (this.images.length === 0) {
+        console.warn("Nenhuma imagem encontrada na galeria");
+        return;
+      }
 
-      const img = galleryItem.querySelector("img");
-      img.onerror = () => (img.src = "./images/placeholder.jpg");
-
-      galleryItem.addEventListener("click", () => {
-        this.showModal(index, items);
+      // Adiciona listeners para as imagens
+      this.images.forEach((img) => {
+        if (img && img.src) {
+          img.addEventListener("click", () => this.showModal(img));
+        }
       });
 
-      grid.appendChild(galleryItem);
-    });
-  },
-  // Adiciona o modal para exibir imagens ampliadas
-  setupModal(items) {
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    modal.innerHTML = `
-      <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <img src="" alt="Imagem ampliada">
-        <div class="modal-controls">
-          <button class="modal-btn prev-btn">❮ Anterior</button>
-          <button class="modal-btn next-btn">Próxima ❯</button>
-        </div>
-      </div>
-    `;
+      // Configura o fechamento do modal
+      const modal = document.querySelector("#imageModal");
+      const closeBtn = document.querySelector(".close-modal");
 
-    document.body.appendChild(modal);
-    this.setupModalControls(modal, items);
-  },
+      if (modal && closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          modal.style.display = "none";
+        });
 
-  setupModalControls(modal, items) {
-    let currentIndex = 0;
-    const closeBtn = modal.querySelector(".close-modal");
-    const prevBtn = modal.querySelector(".prev-btn");
-    const nextBtn = modal.querySelector(".next-btn");
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.style.display = "none";
+          }
+        });
+      }
 
-    closeBtn.onclick = () => modal.classList.remove("active");
-    prevBtn.onclick = () => this.showImage(--currentIndex, items, modal);
-    nextBtn.onclick = () => this.showImage(++currentIndex, items, modal);
-  },
+      // Configura botões de navegação
+      const prevButton = document.querySelector(".prev-button");
+      const nextButton = document.querySelector(".next-button");
 
-  showModal(index, items) {
-    const modal = document.querySelector(".modal");
-    this.showImage(index, items, modal);
-    modal.classList.add("active");
-  },
+      if (prevButton && nextButton) {
+        prevButton.addEventListener("click", () => {
+          if (this.currentImageIndex > 0) {
+            this.showModal(this.images[this.currentImageIndex - 1]);
+          }
+        });
 
-  showImage(index, items, modal) {
-    const img = modal.querySelector("img");
-    img.src = items[index].img;
-    img.alt = items[index].caption;
-
-    modal.querySelector(".prev-btn").disabled = index === 0;
-    modal.querySelector(".next-btn").disabled = index === items.length - 1;
-  },
-  // Adiciona eventos de clique para as miniaturas
-  setupThumbnailEvents(mainImage, thumbnails) {
-    thumbnails.forEach((thumb) => {
-      thumb.addEventListener("click", () => {
-        thumbnails.forEach((t) => t.classList.remove("active-thumb"));
-        thumb.classList.add("active-thumb");
-        mainImage.src = thumb.src;
-        mainImage.alt = thumb.alt;
-      });
-    });
+        nextButton.addEventListener("click", () => {
+          if (this.currentImageIndex < this.images.length - 1) {
+            this.showModal(this.images[this.currentImageIndex + 1]);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao inicializar galeria:", error);
+    }
   },
 };
 

@@ -390,22 +390,47 @@
         </section>
 
         <!-- Modal para visualização de imagens -->
-        <div class="modal">
-            <div class="modal-content">
-                <button type="button" class="close-modal" id="closeModalBtn" name="closeModalBtn"
-                    aria-label="Fechar modal">&times;</button>
-                <img src="" alt="Imagem ampliada" class="modal-image">
-            </div>
-        </div>
-
-        <!-- Seção de Galeria e Vídeos -->
         <section id="galeria">
             <h2>Galeria</h2>
             <div class="gallery-grid">
-                <!-- As imagens serão carregadas via JavaScript -->
+                <!-- Adicione algumas imagens diretamente no HTML para teste -->
+                <div class="gallery-item">
+                    <img src="./images/frieren-1.jpeg" alt="Frieren 1" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-2.jpeg" alt="Frieren 2" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-3.jpeg" alt="Frieren 3" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-4.jpeg" alt="Frieren 4" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-5.jpeg" alt="Frieren 5" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-6.jpg" alt="Frieren 6" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-7.jpeg" alt="Frieren 7" loading="lazy">
+                </div>
+                <div class="gallery-item">
+                    <img src="./images/frieren-8.jpeg" alt="Frieren 8" loading="lazy">
+                </div>
+            </div>
+
+            <div class="modal" id="imageModal">
+                <span class="close-modal">&times;</span>
+                <div class="modal-content">
+                    <img id="modalImage" src="" alt="Imagem ampliada">
+                </div>
+                <button class="modal-nav prev-button" aria-label="Imagem anterior">&lt;</button>
+                <button class="modal-nav next-button" aria-label="Próxima imagem">&gt;</button>
             </div>
         </section>
 
+        <!-- Vídeos do YouTube -->
         <section id="videos">
             <h2>Momentos Memoráveis</h2>
             <div class="video-container">
